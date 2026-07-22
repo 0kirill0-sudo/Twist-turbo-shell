@@ -1,0 +1,3271 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>TWIST: TURBO SHELL — Nightmare Edition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: radial-gradient(ellipse at center, #14141f 0%, #060608 70%, #000 100%); overflow: hidden; font-family: 'Share Tech Mono', 'Courier New', monospace; display: flex; align-items: center; justify-content: center; height: 100vh; color: #ccc; }
+canvas { border: 3px solid #3a3a55; box-shadow: 0 0 60px rgba(120,80,255,0.35), 0 0 120px rgba(255,60,120,0.12), inset 0 0 40px rgba(0,0,0,0.6); display: none; border-radius: 10px; max-width: 96vw; height: auto; }
+#ui { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); color: #fff; font-size: 13px; font-family: 'Orbitron', monospace; letter-spacing: 1px; text-shadow: 0 0 10px #000; pointer-events: none; z-index: 10; background: linear-gradient(135deg, rgba(25,20,40,0.9), rgba(35,15,45,0.9)); padding: 7px 20px; border-radius: 20px; display: none; border: 1px solid rgba(255,120,255,0.25); box-shadow: 0 0 20px rgba(150,50,255,0.25); backdrop-filter: blur(6px); }
+#controls { position: fixed; bottom: 10px; color: #777; font-size: 10px; text-align: center; display: none; z-index: 10; letter-spacing: 0.5px; }
+#dangerVignette { position: fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:900; display:none; box-shadow: inset 0 0 180px rgba(255,0,0,0.55); animation: vignettePulse 1s infinite; }
+@keyframes vignettePulse { 0%,100% { box-shadow: inset 0 0 140px rgba(255,0,0,0.35); } 50% { box-shadow: inset 0 0 220px rgba(255,0,40,0.65); } }
+.overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(ellipse at 50% 0%, rgba(40,20,60,0.5), transparent 60%), rgba(8,8,13,0.98); display: flex; align-items: center; justify-content: center; flex-direction: column; z-index: 1000; overflow-y: auto; padding: 20px; }
+.overlay::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1;
+background-image: radial-gradient(1.5px 1.5px at 15% 25%, rgba(255,255,255,0.5), transparent), radial-gradient(1.5px 1.5px at 75% 15%, rgba(200,180,255,0.4), transparent), radial-gradient(1px 1px at 40% 70%, rgba(255,255,255,0.35), transparent), radial-gradient(2px 2px at 85% 60%, rgba(255,180,255,0.35), transparent), radial-gradient(1px 1px at 60% 40%, rgba(180,220,255,0.3), transparent), radial-gradient(1.5px 1.5px at 25% 85%, rgba(255,255,255,0.3), transparent);
+background-size: 100% 100%; animation: starDrift 30s linear infinite; opacity: 0.8; }
+@keyframes starDrift { 0% { background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0; } 100% { background-position: -40px 60px, 60px -30px, 30px 40px, -50px -20px, 20px 50px, -30px -40px; } }
+.overlay::-webkit-scrollbar { width: 10px; }
+.overlay::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); border-radius: 10px; }
+.overlay::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #6a4a9a, #aa5599); border-radius: 10px; }
+#levelSelect::-webkit-scrollbar { width: 8px; }
+#levelSelect::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); border-radius: 8px; }
+#levelSelect::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #6a4a9a, #aa5599); border-radius: 8px; }
+.overlay h1 { font-family: 'Orbitron', monospace; font-weight: 900; font-size: 48px; color: #fff; text-shadow: 0 0 30px rgba(140,110,255,0.7), 0 0 60px rgba(255,60,160,0.4), 0 0 90px rgba(255,60,60,0.25); margin-bottom: 10px; letter-spacing: 6px; animation: titleGlow 4s ease-in-out infinite; }
+@keyframes titleGlow { 0%,100% { text-shadow: 0 0 30px rgba(140,110,255,0.7), 0 0 60px rgba(255,60,160,0.4), 0 0 90px rgba(255,60,60,0.25); } 50% { text-shadow: 0 0 40px rgba(160,130,255,0.9), 0 0 80px rgba(255,80,180,0.55), 0 0 110px rgba(255,80,80,0.35); } }
+.btn { position: relative; overflow: hidden; background: linear-gradient(135deg, #24243a, #45305a); color: #fff; border: 1px solid rgba(255,255,255,0.25); padding: 12px 28px; font-size: 14px; font-family: 'Orbitron', inherit; font-weight: bold; cursor: pointer; margin: 5px; border-radius: 10px; transition: all 0.25s; text-transform: uppercase; letter-spacing: 1.5px; box-shadow: 0 2px 8px rgba(0,0,0,0.4); }
+.btn::after { content: ''; position: absolute; top: 0; left: -75%; width: 50%; height: 100%; background: linear-gradient(120deg, transparent, rgba(255,255,255,0.35), transparent); transform: skewX(-20deg); transition: left 0.5s; }
+.btn:hover::after { left: 130%; }
+.btn:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 6px 20px rgba(150,100,255,0.45), 0 0 20px rgba(255,80,180,0.2); border-color: rgba(255,255,255,0.6); }
+.btn:active { transform: translateY(0) scale(0.98); }
+#bossWarning { position: fixed; top: 150px; left: 50%; transform: translateX(-50%); font-family: 'Orbitron', monospace; font-weight: 900; font-size: 22px; color: #fff; text-shadow: 0 0 20px #ff0000, 0 0 40px #ff0000; letter-spacing: 3px; z-index: 1200; display: none; pointer-events: none; animation: warnBlink 0.4s infinite; }
+@keyframes warnBlink { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+.btn.small { padding: 8px 16px; font-size: 11px; }
+.btn.shop { background: linear-gradient(135deg, #004433, #00aa66); border-color: #00ffaa; }
+.btn.upgrade { background: linear-gradient(135deg, #440044, #aa00aa); border-color: #ff00ff; }
+.btn.editor { background: linear-gradient(135deg, #443300, #aa6600); border-color: #ffaa00; color: #fff; }
+.btn.sphere { background: linear-gradient(135deg, #fff, #ffffaa, #aaffff, #ffaaff); background-size: 300% 300%; animation: spherePulse 2s infinite; color: #000; font-size: 16px; padding: 12px 30px; border: none; }
+.btn.craft { background: linear-gradient(135deg, #ffaa00, #ff6600); animation: craftPulse 1s infinite; border-color: #ffcc00; }
+@keyframes spherePulse { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+@keyframes craftPulse { 0%,100% { box-shadow: 0 0 20px #ffaa00; } 50% { box-shadow: 0 0 40px #ff6600; } }
+#levelSelect { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; max-width: 700px; max-height: 350px; overflow-y: auto; padding: 10px; }
+.levelBtn { background: linear-gradient(135deg, rgba(40,40,55,0.85), rgba(30,25,45,0.85)); border: 1px solid #555; color: #ccc; padding: 6px; font-size: 10px; cursor: pointer; border-radius: 6px; transition: all 0.2s cubic-bezier(.34,1.56,.64,1); font-family: 'Share Tech Mono'; }
+.levelBtn:hover:not(:disabled) { background: linear-gradient(135deg, #4a4a66, #3a2a55); color: #fff; transform: scale(1.15) translateY(-2px); box-shadow: 0 4px 18px rgba(150,120,255,0.5); border-color: #aa88ff; }
+.levelBtn:disabled { opacity: 0.28; cursor: not-allowed; }
+.levelBtn.boss { border-color: #ff4444; color: #ff6666; background: linear-gradient(135deg, rgba(60,15,15,0.85), rgba(40,10,20,0.85)); }
+.levelBtn.completed { background: linear-gradient(135deg, rgba(20,60,25,0.85), rgba(15,45,25,0.85)); color: #aaffaa; border-color: #00ff66; box-shadow: 0 0 8px rgba(0,255,100,0.15); }
+.levelBtn.final { border-color: #ffffaa; color: #ffffaa; grid-column: span 10; padding: 12px; font-size: 14px; background: linear-gradient(135deg, rgba(70,60,15,0.9), rgba(50,40,10,0.9)); animation: craftPulse 2s infinite; }
+.shardInfo, .artifactInfo { background: linear-gradient(135deg, rgba(255,170,0,0.12), rgba(255,120,0,0.06)); border: 1px solid #ffaa00; padding: 9px 18px; margin: 8px; border-radius: 10px; color: #ffaa00; font-size: 12px; display: inline-block; box-shadow: 0 2px 10px rgba(255,150,0,0.1); }
+.artifactInfo { background: linear-gradient(135deg, rgba(200,150,255,0.14), rgba(150,80,255,0.06)); border-color: #aa88ff; color: #cc99ff; }
+.settingsPanel { background: linear-gradient(150deg, rgba(35,32,48,0.85), rgba(25,22,38,0.85)); border: 1px solid #4a4a66; border-top: 2px solid #ffaa00; border-radius: 14px; padding: 15px; margin: 8px; width: 500px; max-width: 90vw; backdrop-filter: blur(6px); box-shadow: 0 4px 20px rgba(0,0,0,0.35); transition: box-shadow 0.3s; }
+.settingsPanel:hover { box-shadow: 0 6px 26px rgba(255,170,0,0.15); }
+.settingsPanel h3 { font-family: 'Orbitron'; color: #ffcc00; margin-bottom: 10px; font-size: 14px; text-align: center; text-shadow: 0 0 10px rgba(255,200,0,0.5); letter-spacing: 1px; }
+.settingRow { display: flex; align-items: center; justify-content: space-between; margin: 6px 0; color: #ccc; font-size: 12px; }
+.settingRow input[type="range"] { flex: 1; margin: 0 10px; accent-color: #ffaa00; }
+.settingRow .value { min-width: 40px; text-align: right; color: #ffaa00; font-weight: bold; }
+.shop-grid, .upgrade-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; max-width: 800px; width: 100%; margin: 10px 0; }
+.shop-item, .upgrade-item { background: linear-gradient(150deg, rgba(32,30,52,0.92), rgba(52,32,72,0.92)); border: 1px solid #5a5a75; border-radius: 14px; padding: 16px; text-align: center; transition: all 0.3s cubic-bezier(.34,1.2,.64,1); box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+.shop-item:hover, .upgrade-item:hover { transform: translateY(-6px) scale(1.02); border-color: #aa88ff; box-shadow: 0 10px 32px rgba(140,90,255,0.4); }
+.upgrade-item.owned { border-color: #00ff66; background: linear-gradient(150deg, rgba(18,50,25,0.92), rgba(20,65,35,0.92)); box-shadow: 0 4px 20px rgba(0,255,100,0.15); }
+.shop-item .item-icon, .upgrade-item .upg-icon { font-size: 42px; filter: drop-shadow(0 0 12px currentColor); }
+.sphereCraftInfo { background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,200,255,0.05)); border: 2px solid #ffffaa; padding: 12px 20px; margin: 8px; border-radius: 12px; color: #ffffaa; font-size: 13px; text-align: center; box-shadow: 0 0 20px rgba(255,255,150,0.2); }
+.artifactChecklist { background: rgba(0,0,0,0.6); border: 1px solid #555; border-radius: 12px; padding: 12px; margin: 8px; width: 500px; max-width: 90vw; }
+.artifactChecklist h4 { color: #ffcc00; margin-bottom: 8px; text-align: center; font-size: 13px; }
+.artifactRow { display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; margin: 3px 0; border-radius: 6px; font-size: 12px; }
+.artifactRow.have { background: rgba(100,255,100,0.1); color: #aaffaa; border: 1px solid rgba(100,255,100,0.2); }
+.artifactRow.missing { background: rgba(255,100,100,0.1); color: #ffaaaa; border: 1px solid rgba(255,100,100,0.2); }
+.artifactRow .status { font-weight: bold; }
+#endJourneyBtn { position: fixed; bottom: 30px; right: 30px; background: linear-gradient(135deg, #fff, #ffffaa, #aaffff, #ffaaff); background-size: 400% 400%; animation: spherePulse 3s infinite; color: #000; border: none; padding: 15px 25px; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 30px; box-shadow: 0 0 40px rgba(255,255,200,0.8); z-index: 1500; display: none; }
+#phaseHint { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); color: #fff; font-size: 18px; text-shadow: 0 0 15px rgba(255,255,255,0.8); padding: 10px 30px; background: rgba(0,0,0,0.6); border-radius: 20px; z-index: 1500; display: none; pointer-events: none; border: 1px solid rgba(255,255,255,0.2); }
+#editorCanvas { display: block; border: 2px solid #ffaa00; cursor: crosshair; background: #1a1a1a; border-radius: 8px; touch-action: none; }
+.editor-toolbar { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0; justify-content: center; }
+.editor-tool { background: #222; border: 1px solid #555; color: #fff; padding: 6px 10px; font-size: 11px; cursor: pointer; border-radius: 6px; transition: all 0.2s; }
+.editor-tool.active { background: #ffaa00; color: #000; border-color: #ffcc00; box-shadow: 0 0 10px #ffaa00; }
+</style>
+</head>
+<body>
+<div id="mainMenu" class="overlay">
+<h1>TWIST</h1>
+<div style="color:#88aaff; font-size:18px; margin-bottom:6px; letter-spacing: 2px; font-family:'Orbitron';">TURBO SHELL — NIGHTMARE EDITION</div>
+<div style="color:#ff5566; font-size:12px; margin-bottom:15px; letter-spacing: 1px;">☠ Боссы стали безжалостнее. Враги — хитрее. Пощады не будет. ☠</div>
+<p style="color:#ffaa00; font-size:12px; margin-bottom:20px;">🌍 1000 уровней • 🛒 Магазин • ⚔️ Апгрейды • 🎨 Редактор • 🐌 Новый враг: Мортирная улитка</p>
+<button class="btn" onclick="openLevelSelect()">▶ ИГРАТЬ</button>
+<button class="btn shop" onclick="openShop()">🛒 МАГАЗИН</button>
+<button class="btn" style="background:linear-gradient(135deg,#3a1050,#8822cc); border-color:#cc66ff;" onclick="openArtifacts()">✨ АРТЕФАКТЫ <span id="mainMenuArtBadge" style="background:rgba(255,255,255,0.15); padding:2px 8px; border-radius:10px; margin-left:4px;">0/14</span></button>
+<button class="btn upgrade" onclick="openUpgrades()">⚔️ АПГРЕЙДЫ</button>
+<button class="btn editor" onclick="openEditor()">🎨 РЕДАКТОР</button>
+<button class="btn small" onclick="openSettings()">🎛️ НАСТРОЙКИ</button>
+<button class="btn small" onclick="resetProgress()">🗑️ СБРОС</button>
+</div>
+<div id="settingsMenu" class="overlay" style="display:none;">
+<h1 style="font-size:32px;">🎛️ НАСТРОЙКИ</h1>
+<div class="settingsPanel">
+<h3>⚔️ ОБЩАЯ СЛОЖНОСТЬ</h3>
+<div class="settingRow"><label>Сложность</label><input type="range" id="set_difficulty" min="0.5" max="3" step="0.1" value="1"><span class="value" id="val_difficulty">1.0×</span></div>
+<div class="settingRow"><label>HP боссов</label><input type="range" id="set_bossHp" min="0.5" max="3" step="0.1" value="1"><span class="value" id="val_bossHp">1.0×</span></div>
+</div>
+<div class="settingsPanel">
+<h3>👾 ВРАГИ</h3>
+<div class="settingRow"><label>🦔 Шипастые</label><input type="range" id="set_spike" min="0" max="3" step="0.1" value="1"><span class="value" id="val_spike">1.0×</span></div>
+<div class="settingRow"><label>🟢 Слизистые</label><input type="range" id="set_slime" min="0" max="3" step="0.1" value="1"><span class="value" id="val_slime">1.0×</span></div>
+<div class="settingRow"><label>👻 Фантомы</label><input type="range" id="set_phantom" min="0" max="3" step="0.1" value="1"><span class="value" id="val_phantom">1.0×</span></div>
+<div class="settingRow"><label>🦅 Летуны</label><input type="range" id="set_flyer" min="0" max="3" step="0.1" value="1"><span class="value" id="val_flyer">1.0×</span></div>
+<div class="settingRow"><label>🌿 Вытягуны</label><input type="range" id="set_stretcher" min="0" max="3" step="0.1" value="1"><span class="value" id="val_stretcher">1.0×</span></div>
+<div class="settingRow"><label>👁️ Древние</label><input type="range" id="set_immortal" min="0" max="3" step="0.1" value="1"><span class="value" id="val_immortal">1.0×</span></div>
+<div class="settingRow"><label>💣 Мортирные</label><input type="range" id="set_bomber" min="0" max="3" step="0.1" value="1"><span class="value" id="val_bomber">1.0×</span></div>
+</div>
+<div class="settingsPanel">
+<h3>💎 РЕСУРСЫ</h3>
+<div class="settingRow"><label>Кристаллы</label><input type="range" id="set_crystals" min="0.5" max="3" step="0.1" value="1"><span class="value" id="val_crystals">1.0×</span></div>
+<div class="settingRow"><label>Ягоды</label><input type="range" id="set_berries" min="0.5" max="3" step="0.1" value="1"><span class="value" id="val_berries">1.0×</span></div>
+</div>
+<div class="settingsPanel">
+<h3>⚙️ ДОПОЛНИТЕЛЬНО</h3>
+<div class="settingRow"><label>🔊 Громкость</label><input type="range" id="set_masterVolume" min="0" max="1" step="0.1" value="0.7"><span class="value" id="val_masterVolume">0.7×</span></div>
+<div class="settingRow"><label>✨ Частицы</label><input type="range" id="set_particleDensity" min="0.3" max="2" step="0.1" value="1"><span class="value" id="val_particleDensity">1.0×</span></div>
+<div class="settingRow"><label>🎣 Дальность гарпуна</label><input type="range" id="set_harpoonRange" min="0.5" max="2.5" step="0.1" value="1"><span class="value" id="val_harpoonRange">1.0×</span></div>
+<div class="settingRow"><label>📋 Чек-лист артефактов в меню уровней</label><input type="range" id="set_showArtifactChecklist" min="0" max="1" step="1" value="0"><span class="value" id="val_showArtifactChecklist">ВЫКЛ</span></div>
+<div class="settingRow"><label>🚀 Качество свечения (FPS)</label><input type="range" id="set_graphicsQuality" min="0" max="1" step="0.25" value="1"><span class="value" id="val_graphicsQuality">1.0×</span></div>
+</div>
+<button class="btn" onclick="saveSettingsAndBack()">💾 СОХРАНИТЬ</button>
+<button class="btn small" onclick="showMenu('mainMenu')">← НАЗАД</button>
+</div>
+<div id="shopMenu" class="overlay" style="display:none;">
+<h1 style="color:#00ffaa;">🛒 МАГАЗИН ЯГОД</h1>
+<div class="shardInfo">💎 Кристаллы: <b id="shopBalance">0</b></div>
+<div class="shop-grid" id="shopGrid"></div>
+<button class="btn small" onclick="showMenu('mainMenu')">← НАЗАД</button>
+</div>
+<div id="upgradeMenu" class="overlay" style="display:none;">
+<h1 style="color:#ff00ff;">⚔️ АПГРЕЙДЫ ТВИСТА</h1>
+<div class="shardInfo">💎 Кристаллы: <b id="upgradeBalance">0</b></div>
+<div class="upgrade-grid" id="upgradeGrid"></div>
+<button class="btn small" onclick="showMenu('mainMenu')">← НАЗАД</button>
+</div>
+<div id="artifactsMenu" class="overlay" style="display:none;">
+<h1 style="color:#cc66ff;">✨ АРТЕФАКТЫ</h1>
+<div id="artifactsSummary" class="sphereCraftInfo"></div>
+<div class="upgrade-grid" id="artifactsGrid" style="max-width:900px;"></div>
+<button class="btn small" onclick="showMenu('mainMenu')">← НАЗАД</button>
+</div>
+<div id="editorMenu" class="overlay" style="display:none;">
+<h1 style="color:#ffaa00;">🎨 РЕДАКТОР МИРА</h1>
+<div style="color:#ffaa00; font-size:11px; margin:5px;">40×20 клеток | ЛКМ — поставить | ПКМ — удалить</div>
+<div class="editor-toolbar" id="editorToolbar"></div>
+<canvas id="editorCanvas" width="800" height="400"></canvas>
+<div style="margin-top:8px;">
+<button class="btn small" onclick="clearEditor()">🗑️ ОЧИСТИТЬ</button>
+<button class="btn small" onclick="playCustomLevel()">▶ ИГРАТЬ</button>
+<button class="btn small" onclick="showMenu('mainMenu')">← НАЗАД</button>
+</div>
+</div>
+<div id="levelSelectMenu" class="overlay" style="display:none;">
+<h1 style="font-size:28px;">ВЫБОР УРОВНЯ</h1>
+<div id="shardPanel" class="shardInfo"></div>
+<div id="artifactPanel"></div>
+<div id="spherePanel"></div>
+<div style="display:flex; gap:5px; margin:8px 0;">
+<button class="btn small" id="prevPageBtn">← Назад</button>
+<span id="pageInfo" style="color:#ffcc00; padding:5px 10px;"></span>
+<button class="btn small" id="nextPageBtn">Вперёд →</button>
+</div>
+<div id="levelSelect"></div>
+<div style="margin-top:8px;">
+<button class="btn shop" onclick="openShop()">🛒 МАГАЗИН</button>
+<button class="btn upgrade" onclick="openUpgrades()">⚔️ АПГРЕЙДЫ</button>
+<button class="btn small" onclick="showMenu('mainMenu')">← ГЛАВНОЕ МЕНЮ</button>
+</div>
+</div>
+<div id="victoryScreen" class="overlay" style="display:none;">
+<h2 id="victoryTitle" style="font-size:32px; color:#aaffaa; text-shadow: 0 0 20px #00ff00;">УРОВЕНЬ ПРОЙДЕН!</h2>
+<div class="stats" id="victoryStats"></div>
+<div id="craftArea"></div>
+<div>
+<button class="btn" id="nextBtn">СЛЕДУЮЩИЙ ▶</button>
+<button class="btn small" onclick="openLevelSelect()">К УРОВНЯМ</button>
+</div>
+</div>
+<div id="endingOverlay" class="overlay" style="display:none; background:linear-gradient(to bottom, #87ceeb, #b0e0e6, #90ee90, #228b22);">
+<div id="endingText" style="color:#fff; font-size:26px; text-align:center; text-shadow:0 0 20px rgba(255,255,255,0.8); padding:0 30px;"></div>
+</div>
+<button id="endJourneyBtn" onclick="endJourney()">🌟 ЗАВЕРШИТЬ ПУТЕШЕСТВИЕ 🌟</button>
+<div id="phaseHint"></div>
+<div id="dangerVignette"></div>
+<div id="bossWarning"></div>
+<div id="ui">
+<span id="levelLabel">LVL 1</span> |
+<span id="biomeLabel">Crystal</span> |
+<span id="score">💎 0</span> |
+<span id="shardCount">🔶 0/3</span> |
+<span id="berryHud">🍓 0</span> |
+<span id="gunHud" style="color:#888;">🔫 -</span> |
+<span id="speed">⚡ 0</span>
+</div>
+<canvas id="game" width="1200" height="600"></canvas>
+<div id="controls">
+[A/D] Move | [SPACE] Jump | [S] Roll | [SHIFT] Drift | [E] Гарпун | [W] Slam | [Q] Ягода | [X] Пулемёт | [C] Лазер | [ESC] Меню
+</div>
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+// ---- Performance: shadowBlur ("свечение") is by far the most expensive canvas 2D
+// operation used in this game (dozens of glow effects per enemy/particle/boss, every frame).
+// Instead of touching every single draw call, we transparently scale every ctx.shadowBlur
+// assignment by the user's "graphicsQuality" setting. At 0 all glow is free (no blur at all),
+// which fixes most of the frame-rate drops on slower machines without changing any visuals
+// when quality is left at max.
+(function patchShadowBlurForPerformance(context) {
+const nativeDesc = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'shadowBlur');
+if (!nativeDesc) return;
+Object.defineProperty(context, 'shadowBlur', {
+get() { return nativeDesc.get.call(context); },
+set(v) {
+const q = (typeof settings !== 'undefined' && settings.graphicsQuality !== undefined) ? settings.graphicsQuality : 1;
+const total = q * autoPerfScale;
+nativeDesc.set.call(context, total <= 0 ? 0 : v * total);
+}
+});
+})(ctx);
+// ---- Auto performance scaling ----
+// Measures the real time each frame actually takes (not the fixed 0.016 logic step below)
+// and, if the machine can't keep up, automatically dials down glow/particle-heavy effects.
+// This fixes slowdowns on weaker computers without anyone needing to touch a settings menu,
+// and quietly restores full quality again once the load lightens.
+let autoPerfScale = 1;
+let _perfFrameTimes = [];
+let _lastFrameStamp = 0;
+function updateAutoPerfScale(now) {
+if (_lastFrameStamp) {
+const dt = now - _lastFrameStamp;
+_perfFrameTimes.push(dt);
+if (_perfFrameTimes.length > 40) _perfFrameTimes.shift();
+if (_perfFrameTimes.length >= 20) {
+const avg = _perfFrameTimes.reduce((a, b) => a + b, 0) / _perfFrameTimes.length;
+const fps = 1000 / avg;
+if (fps < 40) autoPerfScale = Math.max(0.15, autoPerfScale - 0.04);
+else if (fps > 56) autoPerfScale = Math.min(1, autoPerfScale + 0.02);
+}
+}
+_lastFrameStamp = now;
+}
+let audioCtx;
+const CEILING_Y = -20, FLOOR_Y = 650;
+const SHARD_COLLECTION_TIME = 15, SHARD_AUTO_PULL_DELAY = 3, SHARD_AUTO_PULL_FORCE = 2.5;
+const TOTAL_LEVELS = 1000;
+const LEVELS_PER_PAGE = 100;
+let currentPage = 0;
+
+// ========== AUDIO ==========
+function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+function playTone(freq, duration, type='square', vol=0.1) {
+if (!audioCtx) return;
+const vMult = (typeof settings !== 'undefined' && settings.masterVolume !== undefined) ? settings.masterVolume : 0.7;
+if (vMult <= 0) return;
+vol = vol * vMult;
+const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+osc.type = type; osc.frequency.value = freq;
+gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+osc.connect(gain); gain.connect(audioCtx.destination);
+osc.start(); osc.stop(audioCtx.currentTime + duration);
+}
+const playJump = () => { playTone(400, 0.15, 'square', 0.08); setTimeout(()=>playTone(600, 0.1, 'square', 0.06), 50); };
+const playCollect = () => { playTone(800, 0.1, 'sine', 0.1); setTimeout(()=>playTone(1200, 0.15, 'sine', 0.08), 80); };
+const playRoll = () => playTone(150, 0.3, 'sawtooth', 0.05);
+const playSlam = () => playTone(80, 0.4, 'sawtooth', 0.12);
+const playHarpoon = () => { playTone(300, 0.2, 'triangle', 0.08); playTone(500, 0.15, 'triangle', 0.06); };
+const playDrift = () => playTone(100, 0.1, 'sawtooth', 0.03);
+const playBerry = () => { playTone(600, 0.1, 'sine', 0.1); setTimeout(()=>playTone(900, 0.1, 'sine', 0.1), 100); };
+const playBossHit = () => { playTone(60, 0.5, 'sawtooth', 0.15); playTone(40, 0.3, 'square', 0.1); };
+const playVictory = () => { [523, 659, 784, 1047].forEach((f,i) => setTimeout(()=>playTone(f, 0.3, 'sine', 0.1), i*100)); };
+const playCeiling = () => playTone(200, 0.15, 'sawtooth', 0.08);
+const playImmortalBounce = () => { playTone(150, 0.2, 'sawtooth', 0.12); playTone(100, 0.15, 'square', 0.1); };
+const playFlyerSwoop = () => { playTone(800, 0.3, 'sawtooth', 0.08); setTimeout(()=>playTone(400, 0.2, 'sawtooth', 0.1), 150); };
+const playStretcherGrow = () => playTone(250, 0.4, 'triangle', 0.06);
+const playShardCollect = () => { playTone(1000, 0.15, 'sine', 0.12); setTimeout(()=>playTone(1500, 0.2, 'sine', 0.1), 100); };
+const playCraft = () => { [400, 600, 800, 1000, 1200].forEach((f,i) => setTimeout(()=>playTone(f, 0.3, 'sine', 0.12), i*100)); setTimeout(()=>playTone(1600, 0.5, 'sine', 0.15), 500); };
+const playBossDeath = () => { playTone(150, 0.8, 'sawtooth', 0.2); setTimeout(() => playTone(60, 1.0, 'sawtooth', 0.2), 500); };
+const playShardMagnet = () => playTone(1200, 0.1, 'sine', 0.05);
+const playBossPhase = () => { playTone(200, 0.3, 'sawtooth', 0.15); setTimeout(() => playTone(400, 0.4, 'sawtooth', 0.2), 300); };
+const playFlyerDeath = () => { playTone(600, 0.2, 'sawtooth', 0.15); setTimeout(() => playTone(100, 0.4, 'sawtooth', 0.15), 250); };
+const playSphereCraft = () => { for (let i = 0; i < 8; i++) setTimeout(() => playTone(400 + i * 100, 0.4, 'sine', 0.1), i * 100); setTimeout(() => playTone(1800, 1.5, 'sine', 0.2), 1200); };
+const playSphereBurst = () => { playTone(2000, 0.1, 'sine', 0.2); setTimeout(() => { for (let i = 0; i < 15; i++) setTimeout(() => playTone(200 + Math.random() * 1500, 0.3, 'sine', 0.08), i * 50); }, 100); };
+const playEndingMusic = () => { [523, 659, 784, 1047, 784, 659, 523, 659, 784, 1047, 1319, 1568].forEach((n,i) => setTimeout(() => playTone(n, 0.5, 'sine', 0.1), i*400)); };
+const playSnailArrive = () => { playTone(600, 0.2, 'sine', 0.1); setTimeout(() => playTone(1000, 0.3, 'sine', 0.12), 200); };
+const playBalloonPop = () => playTone(1200, 0.05, 'sine', 0.05);
+const playGunShot = () => playTone(200 + Math.random() * 100, 0.05, 'square', 0.08);
+
+// ========== DATA ==========
+const ARTIFACTS = [
+{ name: 'Кристалл Жизни', desc: '+1 максимальное HP', icon: '❤️', color: '#ff0066', effect: 'hp' },
+{ name: 'Нейро-Ускоритель', desc: '+15% к максимальной скорости', icon: '⚡', color: '#ffff00', effect: 'speed' },
+{ name: 'Гарпун Титана', desc: '+50 к длине языка-гарпуна', icon: '🎣', color: '#00ff88', effect: 'tongue' },
+{ name: 'Ядро Дрифта', desc: 'Турбо-заряд ×2', icon: '🌀', color: '#ff00ff', effect: 'drift' },
+{ name: 'Панцирь Стойкости', desc: '+2с неуязвимости', icon: '🛡️', color: '#00ffff', effect: 'shield' },
+{ name: 'Спираль Вечности', desc: '+30% прыжка', icon: '🌟', color: '#ffaa00', effect: 'jump' },
+{ name: 'Око Бездны', desc: 'Магнит кристаллов', icon: '👁️', color: '#aa00ff', effect: 'magnet' },
+{ name: 'Сердце Бури', desc: 'Slam ×2 радиус', icon: '💥', color: '#ff4400', effect: 'slam' },
+{ name: 'Клинок Ярости', desc: '+12% шанс критического удара по боссу (×2 урон)', icon: '🗡️', color: '#ff2222', effect: 'crit' },
+{ name: 'Пульс Регенерации', desc: 'Восстанавливает HP со временем', icon: '💚', color: '#00ff66', effect: 'regen' },
+{ name: 'Ядро Плазмы', desc: '+урон оружия и лазера', icon: '🔥', color: '#ff8800', effect: 'firepower' },
+{ name: 'Хроно-Катализатор', desc: '+1 дополнительный рывок в воздухе', icon: '⏱️', color: '#00ccff', effect: 'dashcharge' },
+{ name: 'Сфера Изобилия', desc: 'Шанс на бонусный кристалл при сборе', icon: '🍀', color: '#66ff66', effect: 'fortune' },
+{ name: 'Панцирь Титана', desc: '+15% к максимальному урону от Slam/Roll по врагам', icon: '🐌', color: '#ccaaff', effect: 'power' },
+{ name: 'Термо-Ядро', desc: 'Сокращает время заморозки и слизи от боссов на 35%', icon: '🔥', color: '#ff9955', effect: 'coldres' }
+];
+const ARTIFACT_SHARD_COST = 3;
+const BIOMES = [
+{ name: 'Crystal Garden', bg1: '#1a1a2e', bg2: '#16213e', accent: '#00ffff', accent2: '#ff00ff', ground: '#0f3460' },
+{ name: 'Neon Forest', bg1: '#0a1a0a', bg2: '#102010', accent: '#00ff66', accent2: '#ffff00', ground: '#1a331a' },
+{ name: 'Void Wastes', bg1: '#1a0a1a', bg2: '#201020', accent: '#ff0066', accent2: '#ff00ff', ground: '#331a33' },
+{ name: 'Magma Core', bg1: '#2a0a00', bg2: '#1a0500', accent: '#ff4400', accent2: '#ffff00', ground: '#4a1a00' },
+{ name: 'Sky Citadel', bg1: '#0a1a2a', bg2: '#102030', accent: '#66ccff', accent2: '#ffffff', ground: '#1a334a' },
+{ name: 'Quantum Reef', bg1: '#0a1a2a', bg2: '#051020', accent: '#00ccff', accent2: '#ff00ff', ground: '#102a4a' },
+{ name: 'Chrono Desert', bg1: '#2a1a0a', bg2: '#201505', accent: '#ffaa00', accent2: '#ff6600', ground: '#4a2a10' },
+{ name: 'Shadow Nexus', bg1: '#150a2a', bg2: '#0a0520', accent: '#aa00ff', accent2: '#ff00aa', ground: '#20104a' },
+{ name: 'Star Forge', bg1: '#1a1a0a', bg2: '#101005', accent: '#ffff66', accent2: '#ff66ff', ground: '#33331a' },
+{ name: 'Void Throne', bg1: '#0a0a0a', bg2: '#000000', accent: '#ff0000', accent2: '#ffffff', ground: '#1a0000' }
+];
+const UPGRADES = [
+{ id: 'gun', name: 'Пулемёт на спину', icon: '🔫', desc: 'Стреляет по [X]. Заряд 60с — патроны покупаются в магазине 🛒', price: 500 },
+{ id: 'shield', name: 'Энерго-щит', icon: '🛡️', desc: 'Поглощает 1 удар каждые 10 секунд', price: 750 },
+{ id: 'magnet2', name: 'Магнит-2', icon: '🧲', desc: 'Увеличенный радиус сбора кристаллов', price: 400 },
+{ id: 'dash', name: 'Рывок', icon: '💨', desc: 'Двойной прыжок в воздухе', price: 600 },
+{ id: 'heal', name: 'Регенерация', icon: '💚', desc: '+1 HP каждые 30 секунд', price: 800 },
+{ id: 'laser', name: 'Лазерный луч', icon: '⚡', desc: 'Непрерывный лазер по [C]. Заряд 30с — батарейки покупаются в магазине 🛒', price: 1000 }
+];
+const BERRY_TYPES = {
+jelly: { name: 'Желейная', icon: '🫧', desc: 'Суперпрыжок ×1.5', price: 50, color: '#ff00ff' },
+fire: { name: 'Огненная', icon: '🔥', desc: 'Волна огня 200px', price: 75, color: '#ff4400' },
+speed: { name: 'Скоростная', icon: '⚡', desc: 'Мгновенный рывок', price: 60, color: '#ffff00' }
+};
+const GUN_CHARGE_MAX = 60, LASER_CHARGE_MAX = 30;
+const CONSUMABLES = {
+ammo: { name: 'Патроны (пулемёт)', icon: '📦', desc: 'Полная перезарядка пулемёта [X]', price: 150, color: '#ffaa00', requires: 'gun', stockKey: 'ammoStock' },
+battery: { name: 'Батарея (лазер)', icon: '🔋', desc: 'Полная перезарядка лазера [C]', price: 200, color: '#00ffff', requires: 'laser', stockKey: 'batteryStock' }
+};
+const DEFAULT_SETTINGS = {
+difficulty: 1, bossHp: 1,
+spike: 1, slime: 1, phantom: 1,
+flyer: 1, stretcher: 1, immortal: 1, bomber: 1,
+crystals: 1, berries: 1,
+masterVolume: 0.7, particleDensity: 1, harpoonRange: 1,
+showArtifactChecklist: 0, graphicsQuality: 1
+};
+const TOGGLE_SETTINGS = ['showArtifactChecklist'];
+let settings = JSON.parse(localStorage.getItem('twistSettings') || JSON.stringify(DEFAULT_SETTINGS));
+for (let k in DEFAULT_SETTINGS) if (settings[k] === undefined) settings[k] = DEFAULT_SETTINGS[k];
+let progress = JSON.parse(localStorage.getItem('twistProgress') || 'null') || {
+unlocked: 1, completed: [], bestTimes: {}, shards: 0, artifacts: [],
+hasSphere: false, boss101Defeated: false, endingPlayed: false,
+totalCrystals: 0, berryInventory: { jelly: 0, fire: 0, speed: 0, mega_jelly: 0, mega_fire: 0, mega_speed: 0 },
+upgrades: [], ammoStock: 1, batteryStock: 1
+};
+if (progress.shards === undefined) progress.shards = 0;
+if (progress.artifacts === undefined) progress.artifacts = [];
+if (progress.hasSphere === undefined) progress.hasSphere = false;
+if (progress.boss101Defeated === undefined) progress.boss101Defeated = false;
+if (progress.endingPlayed === undefined) progress.endingPlayed = false;
+if (progress.totalCrystals === undefined) progress.totalCrystals = 0;
+if (progress.berryInventory === undefined) progress.berryInventory = { jelly: 0, fire: 0, speed: 0, mega_jelly: 0, mega_fire: 0, mega_speed: 0 };
+if (progress.upgrades === undefined) progress.upgrades = [];
+if (progress.ammoStock === undefined) progress.ammoStock = 1;
+if (progress.batteryStock === undefined) progress.batteryStock = 1;
+function saveProgress() { localStorage.setItem('twistProgress', JSON.stringify(progress)); }
+function saveSettings() { localStorage.setItem('twistSettings', JSON.stringify(settings)); }
+function resetProgress() {
+if (confirm('Сбросить весь прогресс?')) {
+progress = { unlocked: 1, completed: [], bestTimes: {}, shards: 0, artifacts: [], hasSphere: false, boss101Defeated: false, endingPlayed: false, totalCrystals: 0, berryInventory: { jelly: 0, fire: 0, speed: 0, mega_jelly: 0, mega_fire: 0, mega_speed: 0 }, upgrades: [], ammoStock: 1, batteryStock: 1 };
+saveProgress();
+showMenu('mainMenu');
+}
+}
+function getArtifactBonus(effect) {
+let count = 0;
+for (let a of progress.artifacts) {
+const art = ARTIFACTS.find(x => x.name === a);
+if (art && art.effect === effect) count++;
+}
+return count;
+}
+function hasUpgrade(id) { return progress.upgrades.includes(id); }
+function hasAllArtifactTypes() {
+const counts = {};
+for (let a of progress.artifacts) counts[a] = (counts[a] || 0) + 1;
+for (let art of ARTIFACTS) if (!counts[art.name] || counts[art.name] < 1) return false;
+return true;
+}
+function getArtifactDiagnostic() {
+const counts = {};
+for (let a of progress.artifacts) counts[a] = (counts[a] || 0) + 1;
+return ARTIFACTS.map(art => ({ name: art.name, icon: art.icon, count: counts[art.name] || 0, have: (counts[art.name] || 0) >= 1 }));
+}
+function seededRandom(seed) {
+let s = seed;
+return function() { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+}
+
+// ========== LEVEL GENERATION ==========
+// ... [ОСТАЛЬНАЯ ЛОГИКА ГЕНЕРАЦИИ УРОВНЕЙ, МАГАЗИНА, РЕДАКТОРА И ОБНОВЛЕНИЯ ИГРЫ ОСТАЕТСЯ БЕЗ ИЗМЕНЕНИЙ] ...
+// Для экономии места и фокуса на графике, я вставлю полный код, но логика (update, generateLevel) идентична оригиналу.
+// Ниже представлена полностью обновленная секция DRAWING (Отрисовка).
+
+function generateLevel(levelNum) {
+if (levelNum === 1001) return generateFinalBossLevel();
+const biomeIndex = Math.floor((levelNum - 1) / 100) % BIOMES.length;
+const biome = BIOMES[biomeIndex];
+const isBoss = levelNum % 10 === 0;
+const baseDifficulty = Math.min(1, levelNum / 500);
+const difficulty = baseDifficulty * settings.difficulty;
+const rand = seededRandom(levelNum * 12345 + 67890);
+const level = {
+num: levelNum, biome, biomeIndex, isBoss,
+length: 4000 + levelNum * 5, ceilingY: CEILING_Y,
+platforms: [], crystals: [], enemies: [], berries: [], hooks: [],
+hazards: [], decorations: [], goalX: 0, boss: null, shards: [],
+bossDefeatedAt: null, shardCollectionPhase: false,
+totalShardsSpawned: 0, autoPullActive: false,
+isFinalEnding: false, pedestalX: 0, pedestalY: 0,
+spherePlaced: false, sphereY: 0,
+friendlySnails: [], balloons: [], endingStarted: false,
+endingPhase: 0, endingTimer: 0, colorRestore: 0,
+flowers: [], butterflies: [], sphereFragments: [], enemyDrops: [], powerups: []
+};
+if (isBoss) {
+level.length = 1800; level.ceilingY = -100;
+level.platforms.push({ x: 0, y: 520, w: 1800, h: 80, type: 'ground' });
+level.platforms.push({ x: -20, y: -100, w: 20, h: 700, type: 'wall' });
+level.platforms.push({ x: 1800, y: -100, w: 20, h: 700, type: 'wall' });
+for (let i = 0; i < 5; i++) {
+level.platforms.push({ x: 100 + i * 350, y: 400, w: 120, h: 20, type: 'platform' });
+level.platforms.push({ x: 200 + i * 350, y: 300, w: 100, h: 20, type: 'platform' });
+}
+for (let i = 0; i < 6; i++) level.hooks.push({ x: 150 + i * 280, y: 50 });
+level.goalX = 1750; level.boss = createBoss(biomeIndex, difficulty);
+return level;
+}
+let x = 0;
+while (x < level.length) {
+const segLen = 250 + rand() * 400;
+level.platforms.push({ x, y: 520, w: segLen, h: 80, type: 'ground' });
+x += segLen;
+if (x < level.length - 300 && rand() < 0.3 + difficulty * 0.3) x += 100 + rand() * 80;
+}
+level.platforms.push({ x: 0, y: 520, w: 300, h: 80, type: 'ground' });
+level.platforms.push({ x: level.length - 300, y: 520, w: 300, h: 80, type: 'ground' });
+const numMid = 15 + Math.floor(difficulty * 25);
+for (let i = 0; i < numMid; i++) {
+level.platforms.push({ x: 200 + (i / numMid) * (level.length - 400) + rand() * 80, y: 280 + rand() * 150, w: 80 + rand() * 100, h: 20, type: 'platform' });
+}
+const numHooks = 6 + Math.floor(difficulty * 12);
+for (let i = 0; i < numHooks; i++) level.hooks.push({ x: 250 + rand() * (level.length - 500), y: 40 + rand() * 80 });
+const numCrystals = Math.floor((30 + baseDifficulty * 50) * settings.crystals);
+for (let i = 0; i < numCrystals; i++) level.crystals.push({ x: 150 + rand() * (level.length - 300), y: 100 + rand() * 400, collected: false, bobOffset: rand() * Math.PI * 2 });
+const berryTypes = ['jelly', 'fire', 'speed'];
+const numBerries = Math.floor((3 + baseDifficulty * 4) * settings.berries);
+for (let i = 0; i < numBerries; i++) level.berries.push({ x: 400 + rand() * (level.length - 800), y: 150 + rand() * 250, type: berryTypes[Math.floor(rand() * 3)], collected: false });
+// Батарейки и патроны больше не появляются на уровне — теперь их можно только купить в магазине
+const numSpikes = Math.floor((8 + baseDifficulty * 14) * settings.spike);
+for (let i = 0; i < numSpikes; i++) {
+const ex = 500 + rand() * (level.length - 800);
+level.enemies.push({ x: ex, y: 490, type: 'spike', w: 40, h: 35, vx: 0.7 + rand() * 2 + difficulty * 1.4, alive: true, immortal: false, patrol: { left: ex - 150, right: ex + 150 }, pulsePhase: rand() * Math.PI * 2, shellRot: rand() * Math.PI * 2 });
+}
+const numSlimes = Math.floor((5 + baseDifficulty * 8) * settings.slime);
+for (let i = 0; i < numSlimes; i++) {
+const ex = 500 + rand() * (level.length - 800);
+level.enemies.push({ x: ex, y: 495, type: 'slime', w: 45, h: 30, vx: 0.5 + rand() * 1.3 + difficulty * 0.8, alive: true, immortal: false, patrol: { left: ex - 120, right: ex + 120 }, pulsePhase: rand() * Math.PI * 2, shellRot: rand() * Math.PI * 2 });
+}
+const numPhantoms = Math.floor((4 + baseDifficulty * 7) * settings.phantom);
+for (let i = 0; i < numPhantoms; i++) {
+const ex = 500 + rand() * (level.length - 800);
+level.enemies.push({ x: ex, y: 490, type: 'phantom', w: 38, h: 35, vx: 0, alive: true, immortal: false, chasing: false, patrol: { left: ex - 150, right: ex + 150 }, pulsePhase: rand() * Math.PI * 2, shellRot: rand() * Math.PI * 2 });
+}
+const numBombers = Math.floor((2 + baseDifficulty * 6) * settings.bomber);
+for (let i = 0; i < numBombers; i++) {
+const validPlatforms = level.platforms.filter(p => p.type === 'platform' || p.type === 'ground');
+if (validPlatforms.length > 0) {
+const plat = validPlatforms[Math.floor(rand() * validPlatforms.length)];
+const bx = plat.x + 25 + rand() * Math.max(10, plat.w - 50);
+level.enemies.push({ x: bx, y: plat.y, type: 'bomber', w: 44, h: 38, vx: 0, vy: 0, alive: true, immortal: false, fireTimer: Math.floor(rand() * 100), pulsePhase: rand() * Math.PI * 2, shellRot: rand() * Math.PI * 2, aimTelegraph: 0 });
+}
+}
+const numFlyers = Math.floor((5 + baseDifficulty * 11) * settings.flyer);
+for (let i = 0; i < numFlyers; i++) {
+const fx = 500 + rand() * (level.length - 800); const fy = 100 + rand() * 200;
+level.enemies.push({ x: fx, y: fy, homeX: fx, homeY: fy, type: 'flyer', w: 45, h: 40, vx: 0, vy: 0, alive: true, immortal: false, invulnerable: true, state: 'patrol', swoopTimer: 0, patrolAngle: rand() * Math.PI * 2, wingPhase: rand() * Math.PI * 2, pulsePhase: rand() * Math.PI * 2, shellRot: rand() * Math.PI * 2, hp: 1 });
+}
+const numStretchers = Math.floor((4 + baseDifficulty * 9) * settings.stretcher);
+for (let i = 0; i < numStretchers; i++) {
+const validPlatforms = level.platforms.filter(p => p.type === 'platform' || p.type === 'ground');
+if (validPlatforms.length > 0) {
+const plat = validPlatforms[Math.floor(rand() * validPlatforms.length)];
+const sx = plat.x + 20 + rand() * (plat.w - 40);
+level.enemies.push({ x: sx, y: plat.y, type: 'stretcher', w: 35, h: 35, baseH: 35, currentH: 35, targetH: 90 + rand() * 140, vx: 0, vy: 0, alive: true, immortal: true, state: 'idle', growTimer: 0, growDirection: rand() > 0.5 ? 'up' : 'side', sideExtend: 0, targetSideExtend: 45 + rand() * 95, platformY: plat.y, pulsePhase: rand() * Math.PI * 2, shellRot: rand() * Math.PI * 2 });
+}
+}
+const numImmortals = Math.floor((4 + baseDifficulty * 8) * settings.immortal);
+for (let i = 0; i < numImmortals; i++) {
+const ix = 600 + rand() * (level.length - 900);
+level.enemies.push({ x: ix, y: 490, type: 'immortal', w: 45, h: 40, vx: (rand() > 0.5 ? 1 : -1) * (1.3 + rand() * 2), vy: 0, alive: true, immortal: true, patrol: { left: ix - 200, right: ix + 200 }, shieldPhase: rand() * Math.PI * 2, teleportTimer: 0, pulsePhase: rand() * Math.PI * 2, shellRot: rand() * Math.PI * 2 });
+}
+for (let i = 0; i < Math.floor(difficulty * 20 + 3); i++) level.hazards.push({ x: 400 + rand() * (level.length - 700), y: 560, w: 40 + rand() * 40, h: 40, type: 'void' });
+for (let i = 0; i < 60; i++) level.decorations.push({ x: rand() * level.length, y: 520, type: rand() > 0.5 ? 'tree' : 'crystal', height: 40 + rand() * 100, hue: rand() * 360, pulse: rand() * Math.PI * 2 });
+level.goalX = level.length - 150;
+return level;
+}
+function generateFinalBossLevel() {
+const finalBiome = { name: 'THE FINAL VOID', bg1: '#000000', bg2: '#1a0015', accent: '#ff0000', accent2: '#ffffff', ground: '#0a0000' };
+const level = {
+num: 1001, biome: finalBiome, biomeIndex: 99, isBoss: true, isFinalBoss: true,
+length: 2400, ceilingY: -200,
+platforms: [], crystals: [], enemies: [], berries: [], hooks: [],
+hazards: [], decorations: [], goalX: 0, boss: null, shards: [],
+bossDefeatedAt: null, shardCollectionPhase: false,
+totalShardsSpawned: 0, autoPullActive: false,
+isFinalEnding: true, pedestalX: 1200, pedestalY: 520,
+spherePlaced: false, sphereY: 0,
+friendlySnails: [], balloons: [], endingStarted: false,
+endingPhase: 0, endingTimer: 0, colorRestore: 0,
+flowers: [], butterflies: [], sphereFragments: [], enemyDrops: [], powerups: []
+};
+level.platforms.push({ x: 0, y: 520, w: 2400, h: 80, type: 'ground' });
+level.platforms.push({ x: -20, y: -200, w: 20, h: 800, type: 'wall' });
+level.platforms.push({ x: 2400, y: -200, w: 20, h: 800, type: 'wall' });
+for (let i = 0; i < 6; i++) {
+level.platforms.push({ x: 150 + i * 380, y: 420, w: 150, h: 20, type: 'platform' });
+level.platforms.push({ x: 250 + i * 380, y: 320, w: 120, h: 20, type: 'platform' });
+}
+for (let i = 0; i < 4; i++) {
+level.platforms.push({ x: 300 + i * 500, y: 480, w: 120, h: 40, type: 'ramp', slope: -0.4 });
+level.platforms.push({ x: 500 + i * 500, y: 500, w: 40, h: 20, type: 'trampoline' });
+}
+for (let i = 0; i < 8; i++) level.hooks.push({ x: 200 + i * 280, y: 50 });
+level.berries.push({ x: 300, y: 400, type: 'fire', collected: false });
+level.berries.push({ x: 1100, y: 400, type: 'speed', collected: false });
+level.berries.push({ x: 1900, y: 400, type: 'jelly', collected: false });
+// Батарейки и патроны теперь только в магазине
+level.boss = createFinalBoss();
+return level;
+}
+function createBoss(biomeIndex, difficulty) {
+const bossNames = ['Crystal Golem', 'Forest Warden', 'Void Sentinel', 'Magma Titan', 'Sky Guardian', 'Reef Leviathan', 'Time Keeper', 'Shadow Lord', 'Star Forger', 'VOID EMPEROR'];
+const baseHp = Math.floor((18 + difficulty * 42 + biomeIndex * 7) * settings.bossHp);
+return { name: bossNames[biomeIndex % 10], x: 900, y: 400, w: 100, h: 100, hp: baseHp, maxHp: baseHp, vx: 0, vy: 0, attackTimer: 0, projectiles: [], alive: true, invincible: 0, pattern: biomeIndex % 10, phase: 1, phaseTransition: 0, enrage: false, specialCooldown: 0, summonCooldown: 220, minions: [], dashing: false, dashTimer: 0, dashTarget: null, spiralActive: false, spiralTimer: 0, spiralAngle: 0, wallWarnTimer: 0 };
+}
+function createFinalBoss() {
+const baseHp = Math.floor(165 * settings.bossHp);
+return { name: 'ЛОРД ВОЙД', x: 1200, y: 400, w: 140, h: 140, hp: baseHp, maxHp: baseHp, vx: 0, vy: 0, attackTimer: 0, projectiles: [], alive: true, invincible: 0, pattern: 0, phase: 1, phaseTransition: 0, enrage: false, specialCooldown: 0, summonCooldown: 200, minions: [], currentAttackPattern: 0, patternChangeTimer: 0, isFinalBoss: true, attackSequence: [0,1,2,3,4,5,6,7,8,9], dashing: false, dashTimer: 0, dashTarget: null, spiralActive: false, spiralTimer: 0, spiralAngle: 0, wallWarnTimer: 0 };
+}
+
+let currentLevel = 1, level = null, gameStarted = false, gameTime = 0, levelStartTime = 0;
+let cameraX = 0, cameraY = 0, levelCrystals = 0, levelComplete = false, ceilingHitEffect = 0;
+let particles = [], levelShardsCollected = 0, bullets = [], enemyProjectiles = [];
+let comboCount = 0, comboTimer = 0, comboBest = 0;
+function registerKill() {
+comboCount++; comboTimer = 100;
+if (comboCount > comboBest) comboBest = comboCount;
+if (comboCount >= 3) playTone(500 + Math.min(comboCount, 12) * 45, 0.09, 'sine', 0.07);
+}
+const player = {
+x: 100, y: 400, vx: 0, vy: 0, width: 30, height: 30,
+onGround: false, rolling: false, drifting: false, slamming: false,
+shellRotation: 0, speed: 0,
+tongue: { active: false, x: 0, y: 0, targetX: 0, targetY: 0, length: 0, maxLength: 200, hooked: false },
+berry: null, berryTimer: 0, turboCharge: 0,
+facing: 1, trail: [], invincible: 0, hp: 3, maxHp: 3,
+hasSphere: false, carryingSphere: false,
+gunActive: false, gunCooldown: 0, laserActive: false,
+gunCharge: 0, laserCharge: 0,
+shieldTimer: 0, shieldActive: false,
+healTimer: 0, dashUsed: false, frozenTimer: 0, slimedTimer: 0
+};
+const keys = {};
+document.addEventListener('keydown', e => {
+if (gameStarted) {
+keys[e.code] = true;
+if (e.code === 'Escape') openLevelSelect();
+if (e.code === 'KeyX') {
+if (hasUpgrade('gun') && player.gunCharge > 0) player.gunActive = true;
+else if (hasUpgrade('gun') && progress.ammoStock > 0) { progress.ammoStock--; player.gunCharge = GUN_CHARGE_MAX; player.gunActive = true; saveProgress(); playTone(700, 0.12, 'square', 0.12); }
+else if (hasUpgrade('gun')) playTone(80, 0.1, 'square', 0.06);
+}
+if (e.code === 'KeyC') {
+if (hasUpgrade('laser') && player.laserCharge > 0) player.laserActive = true;
+else if (hasUpgrade('laser') && progress.batteryStock > 0) { progress.batteryStock--; player.laserCharge = LASER_CHARGE_MAX; player.laserActive = true; saveProgress(); playTone(1400, 0.12, 'sine', 0.12); }
+else if (hasUpgrade('laser')) playTone(80, 0.1, 'square', 0.06);
+}
+if (['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
+}
+});
+document.addEventListener('keyup', e => {
+if (gameStarted) {
+keys[e.code] = false;
+if (e.code === 'KeyX') { player.gunActive = false; }
+if (e.code === 'KeyC') { player.laserActive = false; }
+}
+});
+
+function showMenu(id) {
+['mainMenu','settingsMenu','shopMenu','upgradeMenu','artifactsMenu','editorMenu','levelSelectMenu','victoryScreen','endingOverlay'].forEach(m => {
+document.getElementById(m).style.display = 'none';
+});
+if (id) document.getElementById(id).style.display = 'flex';
+if (id === 'mainMenu') updateMainMenuBadge();
+}
+function updateMainMenuBadge() {
+const uniqueOwned = getArtifactDiagnostic().filter(d => d.have).length;
+const badge = document.getElementById('mainMenuArtBadge');
+if (badge) badge.textContent = `${progress.artifacts.length} (${uniqueOwned}/${ARTIFACTS.length})`;
+}
+function openArtifacts() { renderArtifacts(); showMenu('artifactsMenu'); }
+function renderArtifacts() {
+const diagnostic = getArtifactDiagnostic();
+const uniqueOwned = diagnostic.filter(d => d.have).length;
+const summary = document.getElementById('artifactsSummary');
+summary.innerHTML = `<div style="font-size:16px;">✨ <b>ВСЕГО СОБРАНО:</b> <span style="color:#ffcc00;">${progress.artifacts.length}</span></div><div>Уникальных типов: <b style="color:${uniqueOwned === ARTIFACTS.length ? '#aaffaa' : '#ffaa00'};">${uniqueOwned}/${ARTIFACTS.length}</b></div>${progress.hasSphere ? '<div style="color:#aaffaa; margin-top:6px;">🌟 Сфера Света уже создана — артефакты потрачены на неё</div>' : ''}`;
+const grid = document.getElementById('artifactsGrid'); grid.innerHTML = '';
+for (let d of diagnostic) {
+const art = ARTIFACTS.find(a => a.name === d.name);
+const item = document.createElement('div');
+item.className = 'upgrade-item' + (d.have ? ' owned' : '');
+item.innerHTML = `<div class="upg-icon" style="color:${art.color};">${art.icon}</div><div style="font-size:13px; font-weight:bold; margin:5px 0; color:${d.have ? '#88ff88' : '#ff8888'};">${art.name} ${d.have ? '✓' : ''}</div><div style="font-size:10px; color:#aaa; margin-bottom:6px;">${art.desc}</div><div style="font-size:12px; color:${d.have ? '#88ff88' : '#ff6666'};">${d.have ? `Собрано: ×${d.count}` : 'Ещё не найден'}</div>`;
+grid.appendChild(item);
+}
+}
+function openLevelSelect() {
+gameStarted = false; canvas.style.display = 'none';
+document.getElementById('ui').style.display = 'none';
+document.getElementById('controls').style.display = 'none';
+document.getElementById('endJourneyBtn').style.display = 'none';
+document.getElementById('phaseHint').style.display = 'none';
+document.getElementById('dangerVignette').style.display = 'none';
+document.getElementById('bossWarning').style.display = 'none';
+showMenu('levelSelectMenu'); renderLevelPage();
+}
+function renderLevelPage() {
+const container = document.getElementById('levelSelect'); container.innerHTML = '';
+const start = currentPage * LEVELS_PER_PAGE + 1;
+const end = Math.min(start + LEVELS_PER_PAGE - 1, TOTAL_LEVELS);
+document.getElementById('pageInfo').textContent = `Стр. ${currentPage + 1}/${Math.ceil(TOTAL_LEVELS / LEVELS_PER_PAGE)} (${start}-${end})`;
+document.getElementById('prevPageBtn').disabled = currentPage === 0;
+document.getElementById('nextPageBtn').disabled = currentPage >= Math.ceil(TOTAL_LEVELS / LEVELS_PER_PAGE) - 1;
+document.getElementById('prevPageBtn').onclick = () => { if (currentPage > 0) { currentPage--; renderLevelPage(); } };
+document.getElementById('nextPageBtn').onclick = () => { if (currentPage < Math.ceil(TOTAL_LEVELS / LEVELS_PER_PAGE) - 1) { currentPage++; renderLevelPage(); } };
+const shardPanel = document.getElementById('shardPanel');
+const uniqueArtCount = getArtifactDiagnostic().filter(d => d.have).length;
+shardPanel.innerHTML = `🔶 <b>ОСКОЛКИ:</b> <span style="color:#ffff00;">${progress.shards}</span> | 💎 <b>КРИСТАЛЛЫ:</b> <span style="color:#00ffaa;">${progress.totalCrystals}</span> | 🍓 <b>ЯГОДЫ:</b> <span style="color:#ff88ff;">${Object.values(progress.berryInventory).reduce((a,b)=>a+b,0)}</span> | ✨ <b>АРТЕФАКТЫ:</b> <span style="color:#cc99ff;">${progress.artifacts.length} (${uniqueArtCount}/${ARTIFACTS.length} видов)</span>`;
+const artifactPanel = document.getElementById('artifactPanel'); artifactPanel.innerHTML = '';
+if (settings.showArtifactChecklist) {
+if (progress.artifacts.length > 0) {
+const grouped = {};
+for (let a of progress.artifacts) grouped[a] = (grouped[a] || 0) + 1;
+let html = '<div style="color:#cc99ff; font-size:12px; margin:5px;">✨ ВАШИ АРТЕФАКТЫ (' + progress.artifacts.length + '):</div><div style="display:flex; flex-wrap:wrap; justify-content:center; gap:4px;">';
+for (let name in grouped) {
+const art = ARTIFACTS.find(x => x.name === name);
+if (art) html += `<div class="artifactInfo">${art.icon} <b>${art.name}</b> ×${grouped[name]}</div>`;
+}
+html += '</div><button class="btn small" style="margin-top:4px;" onclick="openArtifacts()">✨ ВСЕ АРТЕФАКТЫ →</button>';
+artifactPanel.innerHTML = html;
+} else {
+artifactPanel.innerHTML = `<div style="color:#997799; font-size:12px; margin:5px;">✨ Артефактов пока нет — побеждайте боссов и собирайте осколки! <button class="btn small" style="margin-left:6px;" onclick="openArtifacts()">Подробнее →</button></div>`;
+}
+} else {
+artifactPanel.innerHTML = `<div style="color:#997799; font-size:12px; margin:5px;">✨ Собирайте артефакты, побеждая боссов — их список хранится в тайне до посещения меню артефактов. <button class="btn small" style="margin-left:6px;" onclick="openArtifacts()">✨ АРТЕФАКТЫ →</button></div>`;
+}
+const spherePanel = document.getElementById('spherePanel'); spherePanel.innerHTML = '';
+if (progress.hasSphere) {
+spherePanel.innerHTML = `<div class="sphereCraftInfo"><div style="font-size:30px;">🌟</div><div><b>СФЕРА СВЕТА СОЗДАНА</b></div>${progress.boss101Defeated ? '<div style="color:#aaffaa;">✓ Лорд Войд повержен</div>' : ''}</div>`;
+} else {
+const diagnostic = getArtifactDiagnostic();
+const haveCount = diagnostic.filter(d => d.have).length;
+const allHave = haveCount === ARTIFACTS.length;
+let html = `<div class="sphereCraftInfo"><div style="font-size:16px;">🌟 <b>СОЗДАНИЕ СФЕРЫ СВЕТА</b></div><div>Собрано: <b style="color:${allHave ? '#aaffaa' : '#ffaa00'};">${haveCount}/${ARTIFACTS.length}</b></div></div>`;
+if (settings.showArtifactChecklist) {
+html += `<div class="artifactChecklist"><h4>📋 СПИСОК:</h4>`;
+for (let d of diagnostic) {
+html += `<div class="artifactRow ${d.have ? 'have' : 'missing'}"><span>${d.icon} <b>${d.name}</b>${d.count > 0 ? ` (×${d.count})` : ''}</span><span class="status">${d.have ? 'ЕСТЬ' : 'НЕТ'}</span></div>`;
+}
+html += '</div>';
+}
+if (allHave) html += `<button class="btn sphere" onclick="craftSphere()">🌟 СОЗДАТЬ СФЕРУ СВЕТА 🌟</button>`;
+else if (!settings.showArtifactChecklist) {
+html += `<div style="color:#cc99ff; font-size:11px; margin:8px; padding:8px; background:rgba(150,80,255,0.08); border-radius:5px;">🔮 Какие артефакты нужны — секрет. Загляните в меню <button class="btn small" onclick="openArtifacts()">✨ АРТЕФАКТЫ</button>, если хотите узнать подробности, либо включите чек-лист в настройках.</div>`;
+}
+spherePanel.innerHTML = html;
+}
+let currentBiome = -1;
+for (let i = start; i <= end; i++) {
+const biomeIndex = Math.floor((i - 1) / 100) % BIOMES.length;
+const isBoss = i % 10 === 0;
+const unlocked = i <= progress.unlocked;
+const completed = progress.completed.includes(i);
+if (biomeIndex !== currentBiome) {
+currentBiome = biomeIndex;
+const header = document.createElement('div');
+header.style.gridColumn = '1 / -1'; header.style.color = BIOMES[biomeIndex].accent;
+header.style.fontSize = '13px'; header.style.marginTop = '8px'; header.style.textAlign = 'center';
+header.textContent = `◆ ${BIOMES[biomeIndex].name.toUpperCase()} ◆`;
+container.appendChild(header);
+}
+const btn = document.createElement('button');
+btn.className = 'levelBtn' + (isBoss ? ' boss' : '') + (completed ? ' completed' : '');
+btn.textContent = (isBoss ? '💀 ' : '') + i;
+btn.disabled = !unlocked;
+btn.onclick = () => startLevel(i);
+container.appendChild(btn);
+}
+if (progress.hasSphere && currentPage === Math.ceil(TOTAL_LEVELS / LEVELS_PER_PAGE) - 1) {
+const finalBtn = document.createElement('button');
+finalBtn.className = 'levelBtn final';
+finalBtn.textContent = '🌟 1001 — ЛОРД ВОЙД — ФИНАЛЬНАЯ БИТВА 🌟';
+finalBtn.onclick = () => startLevel(1001);
+container.appendChild(finalBtn);
+}
+}
+function craftSphere() {
+if (progress.hasSphere) { alert('⚠️ Сфера уже создана!'); return; }
+if (!hasAllArtifactTypes()) { alert('❌ Не хватает артефактов!'); return; }
+for (let a of ARTIFACTS) {
+const idx = progress.artifacts.indexOf(a.name);
+if (idx !== -1) progress.artifacts.splice(idx, 1);
+}
+progress.hasSphere = true;
+if (!progress.completed.includes(1000)) progress.completed.push(1000);
+progress.unlocked = Math.max(progress.unlocked, 1001);
+saveProgress(); playSphereCraft();
+alert('🌟 СФЕРА СВЕТА СОЗДАНА! Теперь доступен уровень 1001!');
+openLevelSelect();
+}
+function openSettings() { initSettingsUI(); showMenu('settingsMenu'); }
+function initSettingsUI() {
+for (let key in DEFAULT_SETTINGS) {
+const input = document.getElementById('set_' + key);
+const val = document.getElementById('val_' + key);
+if (!input || !val) continue;
+const isToggle = TOGGLE_SETTINGS.includes(key);
+input.value = settings[key];
+val.textContent = isToggle ? (settings[key] > 0 ? 'ВКЛ' : 'ВЫКЛ') : settings[key].toFixed(1) + '×';
+input.oninput = () => { val.textContent = isToggle ? (parseFloat(input.value) > 0 ? 'ВКЛ' : 'ВЫКЛ') : parseFloat(input.value).toFixed(1) + '×'; };
+}
+}
+function saveSettingsAndBack() {
+for (let key in DEFAULT_SETTINGS) {
+const input = document.getElementById('set_' + key);
+if (input) settings[key] = parseFloat(input.value);
+}
+saveSettings(); showMenu('mainMenu');
+}
+function openShop() { showMenu('shopMenu'); renderShop(); }
+function renderShop() {
+document.getElementById('shopBalance').textContent = progress.totalCrystals;
+const grid = document.getElementById('shopGrid'); grid.innerHTML = '';
+for (let type in BERRY_TYPES) {
+const berry = BERRY_TYPES[type];
+const stock = progress.berryInventory[type] || 0;
+const mega = progress.berryInventory['mega_' + type] || 0;
+const canBuy = progress.totalCrystals >= berry.price;
+const item = document.createElement('div');
+item.className = 'shop-item';
+item.innerHTML = `<div class="item-icon" style="color:${berry.color}">${berry.icon}</div><div style="font-size:14px; font-weight:bold; color:${berry.color}; margin:5px 0;">${berry.name}</div><div style="font-size:10px; color:#aaa; margin-bottom:6px;">${berry.desc}</div><div style="font-size:12px; color:#ffff00; margin-bottom:6px;">💎 ${berry.price}</div><div style="font-size:11px; color:#88ff88; margin-bottom:6px;">Обычные: <b>${stock}</b> | МЕГА: <b>${mega}</b></div><button class="btn small" style="background:linear-gradient(135deg,#ffaa00,#ff6600);" ${canBuy ? '' : 'disabled'} onclick="buyBerry('${type}')">🛒 КУПИТЬ</button>${stock >= 3 ? `<button class="btn small" style="background:linear-gradient(135deg,#aa00ff,#ff00aa); margin-top:4px;" onclick="mergeBerries('${type}')">⚗️ 3→1 МЕГА</button>` : ''}`;
+grid.appendChild(item);
+}
+for (let type in CONSUMABLES) {
+const c = CONSUMABLES[type];
+const owned = hasUpgrade(c.requires);
+const stock = progress[c.stockKey] || 0;
+const canBuy = owned && progress.totalCrystals >= c.price;
+const item = document.createElement('div');
+item.className = 'shop-item';
+if (!owned) {
+item.style.opacity = '0.5';
+item.innerHTML = `<div class="item-icon" style="color:${c.color}">${c.icon}</div><div style="font-size:14px; font-weight:bold; color:${c.color}; margin:5px 0;">${c.name}</div><div style="font-size:10px; color:#aaa; margin-bottom:6px;">🔒 Требуется апгрейд «${UPGRADES.find(u=>u.id===c.requires).name}»</div>`;
+} else {
+item.innerHTML = `<div class="item-icon" style="color:${c.color}">${c.icon}</div><div style="font-size:14px; font-weight:bold; color:${c.color}; margin:5px 0;">${c.name}</div><div style="font-size:10px; color:#aaa; margin-bottom:6px;">${c.desc}</div><div style="font-size:12px; color:#ffff00; margin-bottom:6px;">💎 ${c.price}</div><div style="font-size:11px; color:#88ff88; margin-bottom:6px;">В запасе: <b>${stock}</b></div><button class="btn small" style="background:linear-gradient(135deg,${c.color},#333);" ${canBuy ? '' : 'disabled'} onclick="buyConsumable('${type}')">🛒 КУПИТЬ</button>`;
+}
+grid.appendChild(item);
+}
+}
+function buyConsumable(type) {
+const c = CONSUMABLES[type];
+if (!c || !hasUpgrade(c.requires) || progress.totalCrystals < c.price) return;
+progress.totalCrystals -= c.price;
+progress[c.stockKey] = (progress[c.stockKey] || 0) + 1;
+saveProgress(); playTone(1200, 0.15, 'sine', 0.12); renderShop();
+}
+function buyBerry(type) {
+const berry = BERRY_TYPES[type];
+if (progress.totalCrystals < berry.price) return;
+progress.totalCrystals -= berry.price;
+progress.berryInventory[type] = (progress.berryInventory[type] || 0) + 1;
+saveProgress(); playTone(1200, 0.15, 'sine', 0.12); renderShop();
+}
+function mergeBerries(type) {
+if ((progress.berryInventory[type] || 0) < 3) return;
+progress.berryInventory[type] -= 3;
+progress.berryInventory['mega_' + type] = (progress.berryInventory['mega_' + type] || 0) + 1;
+saveProgress(); playTone(1500, 0.2, 'sine', 0.15); renderShop();
+}
+function openUpgrades() { showMenu('upgradeMenu'); renderUpgrades(); }
+function renderUpgrades() {
+document.getElementById('upgradeBalance').textContent = progress.totalCrystals;
+const grid = document.getElementById('upgradeGrid'); grid.innerHTML = '';
+for (let upg of UPGRADES) {
+const owned = hasUpgrade(upg.id);
+const canBuy = !owned && progress.totalCrystals >= upg.price;
+const item = document.createElement('div');
+item.className = 'upgrade-item' + (owned ? ' owned' : '');
+item.innerHTML = `<div class="upg-icon">${upg.icon}</div><div style="font-size:13px; font-weight:bold; margin:5px 0; color:${owned ? '#88ff88' : '#ff88ff'};">${upg.name} ${owned ? '✓' : ''}</div><div style="font-size:10px; color:#aaa; margin-bottom:6px;">${upg.desc}</div>${owned ? '<div style="color:#88ff88; font-size:11px;">КУПЛЕНО</div>' : `<div style="font-size:12px; color:#ffff00; margin-bottom:6px;">💎 ${upg.price}</div><button class="btn small" style="background:linear-gradient(135deg,#aa00aa,#ff00ff);" ${canBuy ? '' : 'disabled'} onclick="buyUpgrade('${upg.id}')">⚔️ КУПИТЬ</button>`}`;
+grid.appendChild(item);
+}
+}
+function buyUpgrade(id) {
+const upg = UPGRADES.find(u => u.id === id);
+if (!upg || hasUpgrade(id) || progress.totalCrystals < upg.price) return;
+progress.totalCrystals -= upg.price;
+progress.upgrades.push(id);
+saveProgress(); playTone(1500, 0.2, 'sine', 0.15); renderUpgrades();
+}
+
+const EDITOR_COLS = 40, EDITOR_ROWS = 20, EDITOR_CELL = 20;
+const EDITOR_TOOLS = [
+{ id: 'empty', name: 'Пусто', icon: '⬜', color: '#2a2a2a' },
+{ id: 'ground', name: 'Земля', icon: '🟫', color: '#4a3a2a' },
+{ id: 'platform', name: 'Платформа', icon: '🟨', color: '#aa8800' },
+{ id: 'spike', name: 'Шипы', icon: '🔺', color: '#aa0000' },
+{ id: 'crystal', name: 'Кристалл', icon: '💎', color: '#00ffff' },
+{ id: 'berry_jelly', name: 'Желейная', icon: '🫧', color: '#ff00ff' },
+{ id: 'berry_fire', name: 'Огненная', icon: '🔥', color: '#ff4400' },
+{ id: 'berry_speed', name: 'Скоростная', icon: '⚡', color: '#ffff00' },
+{ id: 'hook', name: 'Крюк', icon: '🪝', color: '#00ff88' },
+{ id: 'goal', name: 'Финиш', icon: '🏁', color: '#00ff00' },
+{ id: 'spawn', name: 'Старт', icon: '🚩', color: '#ffffff' }
+];
+let currentEditorTool = 'ground';
+let editorGrid = [];
+let editorCanvas, editorCtx;
+let editorMouseDownFlag = false;
+let editorEraseMode = false;
+const EDITOR_SAVE_KEY = 'twistCustomLevelGrid';
+function blankEditorGrid() { return Array(EDITOR_ROWS).fill(null).map(() => Array(EDITOR_COLS).fill('empty')); }
+function loadEditorGrid() {
+try {
+const saved = JSON.parse(localStorage.getItem(EDITOR_SAVE_KEY));
+if (saved && saved.length === EDITOR_ROWS && saved[0] && saved[0].length === EDITOR_COLS) return saved;
+} catch (e) {}
+return blankEditorGrid();
+}
+function saveEditorGrid() {
+try { localStorage.setItem(EDITOR_SAVE_KEY, JSON.stringify(editorGrid)); } catch (e) {}
+}
+function editorPointFromClient(clientX, clientY) {
+// Canvas is drawn at 800x400 internally but can be CSS-scaled to fit smaller screens,
+// so we must convert screen pixels back into the canvas's own pixel space before
+// figuring out which grid cell was touched/clicked.
+const rect = editorCanvas.getBoundingClientRect();
+const scaleX = editorCanvas.width / rect.width;
+const scaleY = editorCanvas.height / rect.height;
+const x = Math.floor((clientX - rect.left) * scaleX / EDITOR_CELL);
+const y = Math.floor((clientY - rect.top) * scaleY / EDITOR_CELL);
+return { x, y };
+}
+function openEditor() {
+showMenu('editorMenu');
+if (!editorCanvas) {
+editorCanvas = document.getElementById('editorCanvas');
+editorCtx = editorCanvas.getContext('2d');
+editorCanvas.onmousedown = (e) => { editorMouseDownFlag = true; editorEraseMode = (e.button === 2); editorPaint(e.clientX, e.clientY); };
+editorCanvas.onmousemove = (e) => { if (editorMouseDownFlag) editorPaint(e.clientX, e.clientY); };
+document.addEventListener('mouseup', () => { if (editorMouseDownFlag) saveEditorGrid(); editorMouseDownFlag = false; });
+editorCanvas.oncontextmenu = e => e.preventDefault();
+// Touch support, since the canvas is now responsive and can show up on phones/tablets.
+editorCanvas.addEventListener('touchstart', (e) => { e.preventDefault(); editorMouseDownFlag = true; editorEraseMode = false; const t = e.touches[0]; editorPaint(t.clientX, t.clientY); }, { passive: false });
+editorCanvas.addEventListener('touchmove', (e) => { e.preventDefault(); if (editorMouseDownFlag) { const t = e.touches[0]; editorPaint(t.clientX, t.clientY); } }, { passive: false });
+editorCanvas.addEventListener('touchend', () => { if (editorMouseDownFlag) saveEditorGrid(); editorMouseDownFlag = false; });
+}
+// Restore whatever was last drawn instead of always wiping it — previously the grid
+// was force-reset to blank every time this menu opened, silently losing your work
+// the moment you navigated away (e.g. to test-play the level) and came back.
+editorGrid = loadEditorGrid();
+const toolbar = document.getElementById('editorToolbar'); toolbar.innerHTML = '';
+for (let tool of EDITOR_TOOLS) {
+const btn = document.createElement('button');
+btn.className = 'editor-tool' + (tool.id === currentEditorTool ? ' active' : '');
+btn.textContent = tool.icon + ' ' + tool.name;
+btn.onclick = () => {
+currentEditorTool = tool.id;
+document.querySelectorAll('.editor-tool').forEach(b => b.classList.remove('active'));
+btn.classList.add('active');
+};
+toolbar.appendChild(btn);
+}
+renderEditor();
+}
+function editorPaint(clientX, clientY) {
+const { x, y } = editorPointFromClient(clientX, clientY);
+if (x < 0 || x >= EDITOR_COLS || y < 0 || y >= EDITOR_ROWS) return;
+// Bug fix: e.button is only meaningful on mousedown/mouseup, not mousemove, so dragging
+// with the right mouse button held used to silently paint instead of erasing. We now
+// remember the erase intent from the initial mousedown for the whole drag gesture.
+editorGrid[y][x] = editorEraseMode ? 'empty' : currentEditorTool;
+renderEditor();
+}
+function renderEditor() {
+editorCtx.fillStyle = '#1a1a1a';
+editorCtx.fillRect(0, 0, editorCanvas.width, editorCanvas.height);
+for (let y = 0; y < EDITOR_ROWS; y++) {
+for (let x = 0; x < EDITOR_COLS; x++) {
+const cell = editorGrid[y][x];
+const tool = EDITOR_TOOLS.find(t => t.id === cell);
+if (tool && cell !== 'empty') {
+editorCtx.fillStyle = tool.color;
+editorCtx.fillRect(x * EDITOR_CELL, y * EDITOR_CELL, EDITOR_CELL, EDITOR_CELL);
+}
+editorCtx.strokeStyle = '#333';
+editorCtx.lineWidth = 0.5;
+editorCtx.strokeRect(x * EDITOR_CELL, y * EDITOR_CELL, EDITOR_CELL, EDITOR_CELL);
+}
+}
+}
+function clearEditor() {
+editorGrid = blankEditorGrid();
+saveEditorGrid();
+renderEditor();
+}
+function playCustomLevel() {
+let spawnX = 2, spawnY = 10, goalX = EDITOR_COLS - 2;
+for (let y = 0; y < EDITOR_ROWS; y++) {
+for (let x = 0; x < EDITOR_COLS; x++) {
+if (editorGrid[y][x] === 'spawn') { spawnX = x; spawnY = y; }
+if (editorGrid[y][x] === 'goal') goalX = x;
+}
+}
+initAudio(); currentLevel = 'custom';
+level = {
+num: 'custom', biome: BIOMES[0], biomeIndex: 0, isBoss: false,
+length: EDITOR_COLS * EDITOR_CELL, ceilingY: CEILING_Y,
+spawnX: spawnX * EDITOR_CELL + EDITOR_CELL / 2, spawnY: spawnY * EDITOR_CELL + EDITOR_CELL / 2,
+platforms: [], crystals: [], enemies: [], berries: [], hooks: [],
+hazards: [], decorations: [], goalX: goalX * EDITOR_CELL, boss: null, shards: [],
+bossDefeatedAt: null, shardCollectionPhase: false,
+totalShardsSpawned: 0, autoPullActive: false,
+isFinalEnding: false, pedestalX: 0, pedestalY: 0,
+spherePlaced: false, sphereY: 0,
+friendlySnails: [], balloons: [], endingStarted: false,
+endingPhase: 0, endingTimer: 0, colorRestore: 0,
+flowers: [], butterflies: [], sphereFragments: [], enemyDrops: [], powerups: []
+};
+for (let y = 0; y < EDITOR_ROWS; y++) {
+for (let x = 0; x < EDITOR_COLS; x++) {
+const cell = editorGrid[y][x];
+const px = x * EDITOR_CELL, py = y * EDITOR_CELL;
+if (cell === 'ground') level.platforms.push({ x: px, y: py, w: EDITOR_CELL, h: EDITOR_CELL, type: 'ground' });
+else if (cell === 'platform') level.platforms.push({ x: px, y: py, w: EDITOR_CELL, h: EDITOR_CELL/2, type: 'platform' });
+else if (cell === 'spike') level.hazards.push({ x: px, y: py, w: EDITOR_CELL, h: EDITOR_CELL, type: 'void' });
+else if (cell === 'crystal') level.crystals.push({ x: px + EDITOR_CELL/2, y: py + EDITOR_CELL/2, collected: false, bobOffset: Math.random() * Math.PI * 2 });
+else if (cell.startsWith('berry_')) level.berries.push({ x: px + EDITOR_CELL/2, y: py + EDITOR_CELL/2, type: cell.replace('berry_', ''), collected: false });
+else if (cell === 'hook') level.hooks.push({ x: px + EDITOR_CELL/2, y: py + EDITOR_CELL/2 });
+}
+}
+resetPlayer(); levelCrystals = 0; levelComplete = false; levelStartTime = performance.now();
+showMenu(null); canvas.style.display = 'block';
+document.getElementById('ui').style.display = 'block';
+document.getElementById('controls').style.display = 'block';
+gameStarted = true; gameLoop();
+}
+function startLevel(num) {
+initAudio(); currentLevel = num; level = generateLevel(num); resetPlayer();
+if (num === 1001) { player.hasSphere = progress.hasSphere; player.carryingSphere = progress.hasSphere; }
+levelCrystals = 0; levelComplete = false; levelStartTime = performance.now();
+showMenu(null); canvas.style.display = 'block';
+document.getElementById('ui').style.display = 'block';
+document.getElementById('controls').style.display = 'block';
+gameStarted = true; gameLoop();
+}
+function resetPlayer() {
+// Use the current level's own spawn point when it defines one (custom levels built in the
+// editor), otherwise fall back to the standard start used by all generated levels.
+player.x = (level && level.spawnX !== undefined) ? level.spawnX : 100;
+player.y = (level && level.spawnY !== undefined) ? level.spawnY : 400;
+player.vx = 0; player.vy = 0;
+player.rolling = false; player.slamming = false;
+player.tongue.active = false; player.tongue.hooked = false;
+const hpBonus = getArtifactBonus('hp'); player.maxHp = 3 + hpBonus; player.hp = player.maxHp;
+const tongueBonus = getArtifactBonus('tongue'); player.tongue.maxLength = (550 + tongueBonus * 60) * (settings.harpoonRange !== undefined ? settings.harpoonRange : 1);
+player.invincible = 0; player.berry = null; player.berryTimer = 0; player.turboCharge = 0;
+player.trail = []; player.gunActive = false; player.gunCooldown = 0; player.laserActive = false;
+if (hasUpgrade('gun') && progress.ammoStock > 0) { player.gunCharge = GUN_CHARGE_MAX; progress.ammoStock--; saveProgress(); } else player.gunCharge = 0;
+if (hasUpgrade('laser') && progress.batteryStock > 0) { player.laserCharge = LASER_CHARGE_MAX; progress.batteryStock--; saveProgress(); } else player.laserCharge = 0;
+player.shieldTimer = 0; player.shieldActive = false; player.healTimer = 0; player.dashUsed = false; player.dashCount = 0; player.regenTimer = 0;
+player.frozenTimer = 0; player.slimedTimer = 0;
+bullets = []; enemyProjectiles = []; cameraX = 0; cameraY = 0;
+if (currentLevel === 1001) { player.hasSphere = progress.hasSphere; player.carryingSphere = progress.hasSphere; }
+else { player.hasSphere = false; player.carryingSphere = false; }
+}
+function nextLevel() {
+if (currentLevel === 'custom') { openLevelSelect(); return; }
+if (currentLevel < TOTAL_LEVELS) startLevel(currentLevel + 1);
+else openLevelSelect();
+}
+function showVictory() {
+gameStarted = false;
+const time = ((performance.now() - levelStartTime) / 1000).toFixed(2);
+if (currentLevel !== 'custom') {
+if (!progress.completed.includes(currentLevel)) progress.completed.push(currentLevel);
+if (!progress.bestTimes[currentLevel] || parseFloat(time) < parseFloat(progress.bestTimes[currentLevel])) progress.bestTimes[currentLevel] = time;
+if (currentLevel === 1001) { progress.boss101Defeated = true; progress.unlocked = Math.max(progress.unlocked, 1001); }
+else if (currentLevel >= progress.unlocked && currentLevel < TOTAL_LEVELS) progress.unlocked = currentLevel + 1;
+}
+progress.totalCrystals += levelCrystals; saveProgress(); playVictory();
+document.getElementById('victoryTitle').textContent =
+currentLevel === 1001 ? '🌟 ЛОРД ВОЙД ПОВЕРЖЕН! 🌟' :
+level.isBoss ? '🏆 БОСС ПОВЕРЖЕН!' : '✨ УРОВЕНЬ ПРОЙДЕН!';
+let statsHtml = `<div class="stats">Уровень: <b style="color:#ffcc00;">${currentLevel}</b><br>Время: <b>${time}s</b><br>Кристаллы: <b>${levelCrystals}</b></div>`;
+if (level.isBoss && currentLevel !== 'custom' && currentLevel <= TOTAL_LEVELS) {
+statsHtml += `<div class="shardInfo">🔶 Осколков: <b>${levelShardsCollected}</b> / ${level.totalShardsSpawned}</div>`;
+}
+document.getElementById('victoryStats').innerHTML = statsHtml;
+const craftArea = document.getElementById('craftArea'); craftArea.innerHTML = '';
+if (currentLevel !== 'custom' && currentLevel <= TOTAL_LEVELS && progress.shards >= ARTIFACT_SHARD_COST) {
+const nextArt = ARTIFACTS[progress.artifacts.length % ARTIFACTS.length];
+craftArea.innerHTML = `<button class="btn craft" onclick="craftArtifact()">✨ СОЗДАТЬ АРТЕФАКТ (${ARTIFACT_SHARD_COST} 🔶) ✨<br><span style="font-size:10px;">${nextArt.icon} ${nextArt.name}</span></button>`;
+}
+showMenu('victoryScreen'); canvas.style.display = 'none';
+document.getElementById('ui').style.display = 'none';
+document.getElementById('controls').style.display = 'none';
+document.getElementById('nextBtn').onclick = nextLevel;
+}
+function craftArtifact() {
+if (progress.shards < ARTIFACT_SHARD_COST) return;
+const art = ARTIFACTS[progress.artifacts.length % ARTIFACTS.length];
+progress.shards -= ARTIFACT_SHARD_COST; progress.artifacts.push(art.name);
+saveProgress(); playCraft(); alert(`✨ ${art.icon} ${art.name} получен!`); showVictory();
+}
+
+// ========== GAME LOGIC (ОРИГИНАЛЬНАЯ ЛОГИКА БЕЗ ИЗМЕНЕНИЙ) ==========
+function setBossWarning(text, frames) {
+const el = document.getElementById('bossWarning');
+el.textContent = text; el.style.display = text ? 'block' : 'none';
+if (text) { clearTimeout(el._hideTO); el._hideTO = setTimeout(() => { el.style.display = 'none'; }, frames * 16); }
+}
+function updateBoss() {
+const b = level.boss; b.attackTimer++;
+if (b.invincible > 0) b.invincible--;
+if (b.specialCooldown > 0) b.specialCooldown--;
+if (b.summonCooldown > 0) b.summonCooldown--;
+if (b.phaseTransition > 0) b.phaseTransition--;
+if (b.dashTimer > 0) b.dashTimer--;
+if (b.isFinalBoss) {
+b.patternChangeTimer++;
+if (b.patternChangeTimer > 260) {
+b.patternChangeTimer = 0;
+b.currentAttackPattern = (b.currentAttackPattern + 1) % b.attackSequence.length;
+b.pattern = b.attackSequence[b.currentAttackPattern];
+spawnParticles(b.x, b.y, 25, '#ffff00'); playBossPhase();
+}
+}
+const hpPercent = b.hp / b.maxHp;
+if (hpPercent <= 0.15 && b.phase < 4) { b.phase = 4; b.enrage = true; b.phaseTransition = 70; playBossPhase(); playBossPhase(); spawnParticles(b.x, b.y, 60, '#ff0000'); setBossWarning('☠ ИСТИННАЯ ЯРОСТЬ ☠', 90); }
+else if (hpPercent <= 0.35 && b.phase < 3) { b.phase = 3; b.enrage = true; b.phaseTransition = 60; playBossPhase(); spawnParticles(b.x, b.y, 40, '#ff0000'); setBossWarning('⚠ ЯРОСТЬ ⚠', 70); }
+else if (hpPercent <= 0.65 && b.phase < 2) { b.phase = 2; b.phaseTransition = 60; playBossPhase(); spawnParticles(b.x, b.y, 30, '#ff6600'); setBossWarning('⚠ ВТОРАЯ ФАЗА ⚠', 60); }
+const dx = player.x - b.x, dy = player.y - b.y;
+const dist = Math.sqrt(dx*dx + dy*dy);
+const phaseSpeedArr = [1, 1.4, 1.9, 2.5];
+const attackFreqArr = [1, 0.62, 0.42, 0.26];
+const phaseSpeedMult = phaseSpeedArr[b.phase - 1];
+const attackFreqMult = attackFreqArr[b.phase - 1];
+let styleMod = 5;
+if (b.phase === 2) styleMod = 6;
+else if (b.phase === 3) styleMod = 8;
+else if (b.phase >= 4) styleMod = 10;
+const cyclePeriod = b.phase >= 4 ? 200 : b.phase === 3 ? 260 : 340;
+const attackStyle = b.isFinalBoss ? b.pattern % 10 : (b.pattern + Math.floor(b.attackTimer / cyclePeriod)) % styleMod;
+
+// Спиральная атака — обрабатывается каждый кадр, пока активна
+if (b.spiralActive) {
+b.spiralTimer--;
+if (b.spiralTimer % 3 === 0) {
+b.spiralAngle += 0.55;
+const spd = (5 + b.phase * 0.8) * phaseSpeedMult * 0.7;
+b.projectiles.push({ x: b.x, y: b.y, vx: Math.cos(b.spiralAngle) * spd, vy: Math.sin(b.spiralAngle) * spd, life: 130, type: 'spiral' });
+b.projectiles.push({ x: b.x, y: b.y, vx: Math.cos(b.spiralAngle + Math.PI) * spd, vy: Math.sin(b.spiralAngle + Math.PI) * spd, life: 130, type: 'spiral' });
+}
+if (b.spiralTimer <= 0) b.spiralActive = false;
+}
+
+if (!b.dashing && !b.spiralActive && b.attackTimer % Math.max(14, Math.floor(56 * attackFreqMult)) === 0) {
+const angle = Math.atan2(dy, dx);
+if (attackStyle === 0) {
+b.projectiles.push({ x: b.x, y: b.y, vx: Math.cos(angle) * 6.5 * phaseSpeedMult, vy: Math.sin(angle) * 6.5 * phaseSpeedMult, life: 180, type: 'fireball' });
+} else if (attackStyle === 1) {
+for (let i = -1; i <= 1; i++) {
+const a = angle + i * 0.3;
+b.projectiles.push({ x: b.x, y: b.y, vx: Math.cos(a) * 6 * phaseSpeedMult, vy: Math.sin(a) * 6 * phaseSpeedMult, life: 160, type: 'fireball' });
+}
+} else if (attackStyle === 2) {
+b.projectiles.push({ x: b.x, y: b.y, vx: Math.cos(angle) * 4 * phaseSpeedMult, vy: Math.sin(angle) * 4 * phaseSpeedMult, life: 220, type: 'fireball', homing: true });
+} else if (attackStyle === 3) {
+const ringCount = 8 + b.phase * 2;
+for (let i = 0; i < ringCount; i++) {
+const a = (i / ringCount) * Math.PI * 2;
+b.projectiles.push({ x: b.x, y: b.y, vx: Math.cos(a) * 5 * phaseSpeedMult, vy: Math.sin(a) * 5 * phaseSpeedMult, life: 140, type: 'fireball' });
+}
+} else if (attackStyle === 5) {
+setBossWarning('⚠ ВЕЕРНЫЙ ЗАЛП ⚠', 40);
+const fanCount = 7;
+for (let i = 0; i < fanCount; i++) {
+const a = angle + (i - (fanCount-1)/2) * 0.16;
+b.projectiles.push({ x: b.x, y: b.y, vx: Math.cos(a) * 8.5 * phaseSpeedMult, vy: Math.sin(a) * 8.5 * phaseSpeedMult, life: 150, type: 'sweep' });
+}
+} else if (attackStyle === 6) {
+setBossWarning('⚠ ШИПЫ ИЗ ЗЕМЛИ ⚠', 45);
+const wallCount = 5 + b.phase;
+const startX = Math.max(150, Math.min(level.length - 150, player.x - wallCount * 45));
+for (let i = 0; i < wallCount; i++) {
+const sx = startX + i * 90 + (Math.random() - 0.5) * 20;
+b.projectiles.push({ x: sx, y: 505, vx: 0, vy: -3 - b.phase * 0.6, life: 90, type: 'spike' });
+spawnParticles(sx, 505, 4, '#ff2222');
+}
+playSlam();
+} else if (attackStyle === 7) {
+setBossWarning('☠ СПИРАЛЬ ХАОСА ☠', 60);
+b.spiralActive = true; b.spiralTimer = 100 + b.phase * 20; b.spiralAngle = angle;
+playBossPhase();
+} else if (attackStyle === 8) {
+setBossWarning('❄ ЛЕДЯНОЙ ЗАЛП ❄', 45);
+const iceCount = 5 + b.phase;
+for (let i = 0; i < iceCount; i++) {
+const a = angle + (i - (iceCount-1)/2) * 0.12;
+b.projectiles.push({ x: b.x, y: b.y, vx: Math.cos(a) * 7 * phaseSpeedMult, vy: Math.sin(a) * 7 * phaseSpeedMult, life: 170, type: 'ice' });
+}
+playTone(1400, 0.2, 'sine', 0.1); setTimeout(()=>playTone(1800, 0.15, 'sine', 0.08), 100);
+} else if (attackStyle === 9) {
+setBossWarning('🟢 ЯДОВИТАЯ СЛИЗЬ 🟢', 45);
+const slimeCount = 3 + Math.floor(b.phase / 2);
+for (let i = 0; i < slimeCount; i++) {
+const a = angle + (Math.random() - 0.5) * 0.7;
+const spd = (3.5 + Math.random() * 2) * phaseSpeedMult;
+b.projectiles.push({ x: b.x, y: b.y, vx: Math.cos(a) * spd, vy: Math.sin(a) * spd - 2, life: 200, type: 'slime', gravity: true });
+}
+playTone(300, 0.25, 'sawtooth', 0.1);
+} else {
+if (b.specialCooldown <= 0) {
+b.dashing = true; b.dashTarget = { x: player.x, y: player.y }; b.dashTimer = 40; b.specialCooldown = Math.max(90, 200 - b.phase * 30);
+spawnParticles(b.x, b.y, 15, '#ffffff'); playBossPhase(); setBossWarning('⚠ РЫВОК! ⚠', 40);
+} else {
+b.projectiles.push({ x: b.x, y: b.y, vx: Math.cos(angle) * 6 * phaseSpeedMult, vy: Math.sin(angle) * 6 * phaseSpeedMult, life: 160, type: 'fireball' });
+}
+}
+}
+const maxMinions = b.phase >= 4 ? 4 : b.phase >= 3 ? 3 : 2;
+if (b.phase >= 2 && b.summonCooldown <= 0 && level.enemies.filter(e => e.summoned && e.alive).length < maxMinions) {
+b.summonCooldown = b.phase >= 4 ? 220 : b.phase >= 3 ? 300 : 460;
+const summonCount = b.phase >= 4 ? 2 : 1;
+for (let s = 0; s < summonCount; s++) {
+const sx = Math.max(150, Math.min(level.length - 150, b.x + (Math.random() > 0.5 ? 200 : -200) + s * 80));
+level.enemies.push({ x: sx, y: 480, type: 'phantom', w: 38, h: 35, vx: 0, alive: true, immortal: false, chasing: false, summoned: true, patrol: { left: sx - 150, right: sx + 150 }, pulsePhase: Math.random() * Math.PI * 2, shellRot: Math.random() * Math.PI * 2 });
+spawnParticles(sx, 480, 15, '#aa00ff');
+}
+playFlyerSwoop();
+}
+if (b.dashing) {
+const ddx = b.dashTarget.x - b.x, ddy = b.dashTarget.y - b.y;
+const ddist = Math.sqrt(ddx*ddx + ddy*ddy) || 1;
+b.vx = (ddx / ddist) * 15 * phaseSpeedMult; b.vy = (ddy / ddist) * 15 * phaseSpeedMult;
+b.x += b.vx; b.y += b.vy;
+if (b.dashTimer <= 0 || ddist < 45) { b.dashing = false; spawnParticles(b.x, b.y, 20, '#ff8800'); }
+} else if (!b.spiralActive) {
+b.vx = Math.cos(b.attackTimer * 0.05) * 3 * phaseSpeedMult;
+b.vy += 0.5; b.x += b.vx; b.y += b.vy;
+}
+const minX = 100, maxX = level.length - 100;
+if (b.x < minX) { b.x = minX; b.vx *= -0.5; }
+if (b.x > maxX) { b.x = maxX; b.vx *= -0.5; }
+if (b.y > 420) { b.y = 420; b.vy = 0; }
+if (b.y < 100) { b.y = 100; b.vy = 0; }
+for (let p of b.projectiles) {
+if (p.homing && p.life > 160) {
+const pdx = player.x - p.x, pdy = player.y - p.y;
+const pdist = Math.sqrt(pdx*pdx + pdy*pdy) || 1;
+p.vx += (pdx / pdist) * 0.2; p.vy += (pdy / pdist) * 0.2;
+const sp = Math.sqrt(p.vx*p.vx + p.vy*p.vy), cap = 7.5 * phaseSpeedMult;
+if (sp > cap) { p.vx = p.vx / sp * cap; p.vy = p.vy / sp * cap; }
+}
+if (p.type === 'spike') { p.vy += 0.35; }
+if (p.type === 'slime' && p.gravity) { p.vy += 0.25; }
+p.x += p.vx; p.y += p.vy; p.life--;
+if (player.invincible <= 0) {
+const pdx = player.x - p.x, pdy = player.y - p.y;
+const hitR = p.type === 'spike' ? 16 : p.type === 'sweep' ? 18 : p.type === 'ice' ? 14 : p.type === 'slime' ? 17 : 20;
+if (Math.sqrt(pdx*pdx + pdy*pdy) < hitR) {
+player.hp--;
+const shieldBonus = getArtifactBonus('shield');
+player.invincible = 60 + shieldBonus * 120;
+player.vy = -8; p.life = 0;
+if (p.type === 'ice') {
+const coldRes = 1 - Math.min(0.7, getArtifactBonus('coldres') * 0.35);
+player.frozenTimer = Math.max(player.frozenTimer || 0, Math.round(140 * coldRes));
+spawnParticles(player.x, player.y, 12, '#88ddff');
+playTone(1600, 0.15, 'sine', 0.08);
+} else if (p.type === 'slime') {
+const coldRes = 1 - Math.min(0.7, getArtifactBonus('coldres') * 0.35);
+player.slimedTimer = Math.max(player.slimedTimer || 0, Math.round(160 * coldRes));
+spawnParticles(player.x, player.y, 12, '#aaff44');
+playTone(250, 0.2, 'sawtooth', 0.08);
+} else {
+spawnParticles(player.x, player.y, 10, '#ff0000');
+}
+if (player.hp <= 0) resetPlayer();
+}
+}
+}
+b.projectiles = b.projectiles.filter(p => p.life > 0);
+if (player.invincible <= 0 && b.invincible <= 0) {
+const bdx = player.x - b.x, bdy = player.y - b.y;
+if (Math.abs(bdx) < (player.width + b.w) / 2 && Math.abs(bdy) < (player.height + b.h) / 2) {
+if (player.rolling && Math.abs(player.vx) > 5) { damageBoss(1); player.vx *= -0.8; }
+else if (player.slamming) { damageBoss(2); player.vy = -10; }
+else {
+player.hp--;
+const shieldBonus = getArtifactBonus('shield');
+player.invincible = 60 + shieldBonus * 120;
+player.vx = bdx > 0 ? 10 : -10; player.vy = b.dashing ? -12 : -8;
+if (player.hp <= 0) resetPlayer();
+}
+}
+}
+}
+function damageBoss(dmg) {
+const b = level.boss;
+const critChance = getArtifactBonus('crit') * 0.12;
+const powerBonus = 1 + getArtifactBonus('power') * 0.15;
+let finalDmg = dmg * powerBonus;
+let isCrit = false;
+if (Math.random() < critChance) { finalDmg *= 2; isCrit = true; }
+b.hp -= finalDmg; b.invincible = 30; playBossHit();
+registerKill();
+spawnParticles(b.x, b.y, isCrit ? 32 : 20, isCrit ? '#ffffff' : level.biome.accent);
+if (b.hp <= 0) {
+b.alive = false; spawnParticles(b.x, b.y, 50, '#ffff00'); playBossDeath();
+if (currentLevel !== 'custom' && currentLevel <= TOTAL_LEVELS) {
+// Ровно один осколок с каждого босса
+level.totalShardsSpawned = 1;
+const angle = -Math.PI / 2 + (Math.random() - 0.5) * 0.8;
+const speed = 6 + Math.random() * 4;
+level.shards.push({ x: b.x, y: b.y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 5, size: 16 + Math.random() * 4, rotation: Math.random() * Math.PI * 2, rotSpeed: (Math.random() - 0.5) * 0.3, bobPhase: Math.random() * Math.PI * 2, color: level.biome.accent, color2: level.biome.accent2, collected: false });
+level.bossDefeatedAt = gameTime; level.shardCollectionPhase = true; level.autoPullActive = false;
+for (let en of level.enemies) { en.alive = false; spawnParticles(en.x, en.y, 5, '#ffaa00'); }
+}
+}
+}
+function spawnCrystalDrop(x, y) {
+if (Math.random() < 0.3) {
+level.enemyDrops.push({ x, y, vx: (Math.random() - 0.5) * 4, vy: -5 - Math.random() * 3, size: 8, life: 600, collected: false, gravity: 0.3 });
+playTone(900, 0.1, 'sine', 0.1);
+}
+}
+const MAX_PARTICLES = 400;
+function spawnParticles(x, y, count, color) {
+count = Math.round(count * (settings.particleDensity !== undefined ? settings.particleDensity : 1) * autoPerfScale);
+if (particles.length > MAX_PARTICLES) return;
+for (let i = 0; i < count && particles.length < MAX_PARTICLES; i++) {
+particles.push({ x, y, vx: (Math.random() - 0.5) * 8, vy: (Math.random() - 0.5) * 8 - 2, life: 20 + Math.random() * 20, color, size: 2 + Math.random() * 4 });
+}
+}
+function activateBerry() {
+if (!player.berry) return;
+switch(player.berry) {
+case 'jelly': player.vy = -20; spawnParticles(player.x, player.y, 15, '#ff00ff'); break;
+case 'fire':
+for (let en of level.enemies) {
+if (Math.abs(en.x - player.x) < 150 && en.alive) {
+if (en.type === 'flyer' && en.state === 'swoop') { en.alive = false; registerKill(); spawnParticles(en.x, en.y, 15, '#ff6600'); playFlyerDeath(); }
+else if (!en.immortal) { en.alive = false; registerKill(); spawnParticles(en.x, en.y, 10, '#ff4400'); spawnCrystalDrop(en.x, en.y); }
+else { en.x += (en.x - player.x) > 0 ? 100 : -100; spawnParticles(en.x, en.y, 8, '#ffaa00'); }
+}
+}
+if (level.boss && level.boss.alive && Math.abs(level.boss.x - player.x) < 200) damageBoss(1);
+spawnParticles(player.x, player.y, 20, '#ff4400');
+break;
+case 'speed': player.vx = player.facing * 25; spawnParticles(player.x, player.y, 20, '#ffff00'); break;
+}
+player.berryTimer = 0; player.berry = null; playBerry();
+}
+
+// ... [update() функция полностью идентична оригиналу, пропускаем для краткости, она не менялась] ...
+// В реальном файле здесь будет полная функция update() из оригинала.
+// Чтобы код работал, я вставлю ее полностью ниже.
+
+function findGrappleAnchor() {
+const candidates = [];
+for (let h of level.hooks) candidates.push({ x: h.x, y: h.y, w: 30 });
+for (let p of level.platforms) {
+if (p.type === 'ground' || p.type === 'wall') continue;
+candidates.push({ x: p.x, y: p.y, w: p.w });
+candidates.push({ x: p.x + p.w, y: p.y, w: p.w });
+candidates.push({ x: p.x + p.w / 2, y: p.y, w: p.w });
+}
+let best = null, bestScore = Infinity;
+for (let c of candidates) {
+const dx = c.x - player.x, dy = c.y - player.y;
+const dist = Math.sqrt(dx*dx + dy*dy);
+if (dist > player.tongue.maxLength || dist < 25) continue;
+// Предпочитаем цели впереди по направлению взгляда и повыше игрока
+const facingBonus = (dx * player.facing > 0) ? 0 : 60;
+const upBonus = dy < 0 ? 0 : 40;
+const score = dist + facingBonus + upBonus;
+if (score < bestScore) { bestScore = score; best = { x: c.x, y: c.y }; }
+}
+return best;
+}
+function update() {
+if (!gameStarted || levelComplete) return;
+gameTime += 0.016;
+if (level.isFinalEnding && level.endingStarted) { updateFinalEnding(); return; }
+if (level.shardCollectionPhase) {
+const timeSinceBossDeath = gameTime - level.bossDefeatedAt;
+if (!level.autoPullActive && timeSinceBossDeath >= SHARD_AUTO_PULL_DELAY) {
+level.autoPullActive = true; playTone(800, 0.3, 'sine', 0.1);
+setTimeout(() => playTone(1200, 0.4, 'sine', 0.1), 300);
+}
+const allCollected = level.shards.every(s => s.collected);
+const timeExpired = timeSinceBossDeath >= SHARD_COLLECTION_TIME;
+if (allCollected || timeExpired) { levelComplete = true; setTimeout(showVictory, allCollected ? 300 : 800); return; }
+}
+if (player.frozenTimer > 0) player.frozenTimer--;
+if (player.slimedTimer > 0) player.slimedTimer--;
+const frozenMult = player.frozenTimer > 0 ? 0.4 : 1;
+const slimedMult = player.slimedTimer > 0 ? 0.6 : 1;
+const accel = player.onGround ? 0.8 : 0.4;
+const friction = player.onGround ? (player.drifting ? 0.96 : (player.slimedTimer > 0 ? 0.7 : 0.88)) : 0.98;
+const speedBonus = (1 + getArtifactBonus('speed') * 0.15) * frozenMult * slimedMult;
+let speedMult = speedBonus;
+if (player.berry === 'speed') speedMult *= 1.5;
+if (player.berry === 'jelly') speedMult *= 1.2;
+if (keys['KeyA'] || keys['ArrowLeft']) { player.vx -= accel * speedMult; player.facing = -1; }
+if (keys['KeyD'] || keys['ArrowRight']) { player.vx += accel * speedMult; player.facing = 1; }
+let maxSpeed = (player.rolling ? 15 : 8) * speedBonus;
+if (player.berry === 'speed') maxSpeed *= 1.5;
+player.vx = Math.max(-maxSpeed, Math.min(maxSpeed, player.vx));
+if (!keys['KeyA'] && !keys['ArrowLeft'] && !keys['KeyD'] && !keys['ArrowRight']) player.vx *= friction;
+const jumpBonus = (1 + getArtifactBonus('jump') * 0.3) * (player.frozenTimer > 0 ? 0.7 : 1);
+const maxDashes = 1 + getArtifactBonus('dashcharge');
+if (keys['Space'] && player.onGround) {
+let jumpForce = -12 * jumpBonus;
+if (player.berry === 'jelly') jumpForce = -16 * jumpBonus;
+player.vy = jumpForce; player.onGround = false; player.dashCount = 0;
+playJump(); spawnParticles(player.x, player.y + player.height/2, 5, level.biome.accent);
+} else if (keys['Space'] && !player.onGround && hasUpgrade('dash') && (player.dashCount || 0) < maxDashes) {
+player.vy = -10 * jumpBonus; player.dashCount = (player.dashCount || 0) + 1; playJump();
+spawnParticles(player.x, player.y, 10, '#88ffff');
+}
+if (keys['KeyS'] && player.onGround && !player.rolling) { player.rolling = true; playRoll(); }
+if (!keys['KeyS'] && player.rolling) player.rolling = false;
+player.drifting = keys['ShiftLeft'] || keys['ShiftRight'];
+const driftBonus = 1 + getArtifactBonus('drift');
+if (player.drifting && Math.abs(player.vx) > 3 && player.onGround) {
+playDrift(); player.turboCharge = Math.min(100, player.turboCharge + 0.5 * driftBonus);
+spawnParticles(player.x, player.y + player.height/2, 1, '#ffff00');
+}
+if (player.turboCharge >= 100 && keys['Space']) { player.vx *= 2; player.turboCharge = 0; spawnParticles(player.x, player.y, 15, '#ff00ff'); playTone(800, 0.3, 'sawtooth', 0.1); }
+if (keys['KeyW'] && !player.onGround && !player.slamming) { player.slamming = true; player.vy = 20; playSlam(); }
+if (keys['KeyE'] && !player.tongue.active) {
+player.tongue.active = true; player.tongue.hooked = false; player.tongue.length = 0;
+const anchor = findGrappleAnchor();
+if (anchor) {
+player.tongue.hooked = true;
+player.tongue.targetX = anchor.x; player.tongue.targetY = anchor.y;
+player.tongue.length = Math.max(30, Math.sqrt((anchor.x-player.x)**2 + (anchor.y-player.y)**2) * 0.92);
+playHarpoon();
+} else {
+player.tongue.targetX = player.x + player.facing * player.tongue.maxLength;
+player.tongue.targetY = player.y - 100;
+playTone(180, 0.1, 'triangle', 0.05);
+}
+}
+if (player.tongue.active) {
+if (!player.tongue.hooked) {
+player.tongue.length += 25;
+if (player.tongue.length >= player.tongue.maxLength * 0.35) player.tongue.active = false;
+} else {
+let dx = player.tongue.targetX - player.x, dy = player.tongue.targetY - player.y;
+let dist = Math.sqrt(dx*dx + dy*dy);
+let angle = Math.atan2(dy, dx);
+player.vx += Math.cos(angle + Math.PI/2) * 0.5;
+player.vy += Math.cos(angle) * 0.3;
+if (dist > player.tongue.length) {
+player.x = player.tongue.targetX - Math.cos(angle) * player.tongue.length;
+player.y = player.tongue.targetY - Math.sin(angle) * player.tongue.length;
+}
+if (!keys['KeyE']) {
+player.vx *= 1.5; player.vy = -8;
+player.tongue.active = false; player.tongue.hooked = false;
+spawnParticles(player.x, player.y, 8, '#00ff88');
+}
+}
+}
+if (keys['KeyQ'] && player.berry) activateBerry();
+if (player.berryTimer > 0) { player.berryTimer -= 0.016; if (player.berryTimer <= 0) player.berry = null; }
+let gravity = 0.6;
+if (player.berry === 'jelly') gravity = 0.4;
+player.vy += gravity; player.x += player.vx; player.y += player.vy;
+if (player.y < level.ceilingY) { player.y = level.ceilingY; if (player.vy < 0) { player.vy = Math.abs(player.vy) * 0.3; ceilingHitEffect = 15; playCeiling(); spawnParticles(player.x, level.ceilingY, 8, level.biome.accent); } }
+if (player.x < 15) { player.x = 15; player.vx = 0; }
+if (player.x > level.length - 15) { player.x = level.length - 15; player.vx = 0; }
+if (player.rolling || Math.abs(player.vx) > 2) player.shellRotation += player.vx * 0.1;
+player.onGround = false;
+for (let p of level.platforms) {
+if (p.type === 'wall') {
+if (player.y + player.height > p.y && player.y < p.y + p.h) {
+if (player.x + player.width/2 > p.x && player.x - player.width/2 < p.x + p.w) {
+if (player.vx > 0) { player.x = p.x - player.width/2; player.vx = 0; }
+else if (player.vx < 0) { player.x = p.x + p.w + player.width/2; player.vx = 0; }
+}
+}
+continue;
+}
+if (p.type === 'trampoline') {
+if (player.x + player.width/2 > p.x && player.x - player.width/2 < p.x + p.w && player.y + player.height > p.y && player.y + player.height < p.y + p.h + 10 && player.vy > 0) {
+player.vy = -18 * jumpBonus; player.onGround = false; playJump(); spawnParticles(p.x + p.w/2, p.y, 8, level.biome.accent2);
+}
+continue;
+}
+if (player.x + player.width/2 > p.x && player.x - player.width/2 < p.x + p.w) {
+if (player.y + player.height > p.y && player.y + player.height < p.y + p.h + 15 && player.vy >= 0) {
+player.y = p.y - player.height; player.vy = 0; player.onGround = true;
+if (player.slamming) {
+player.slamming = false; spawnParticles(player.x, player.y + player.height, 20, '#ff4400'); playSlam();
+const slamRadius = 100 + getArtifactBonus('slam') * 50;
+for (let en of level.enemies) {
+if (Math.abs(en.x - player.x) < slamRadius && en.alive) {
+if (en.type === 'flyer' && en.state === 'swoop') { en.alive = false; registerKill(); spawnParticles(en.x, en.y, 15, '#ff6600'); playFlyerDeath(); }
+else if (!en.immortal) { en.alive = false; registerKill(); spawnParticles(en.x, en.y, 10, '#ff0000'); spawnCrystalDrop(en.x, en.y); }
+}
+}
+if (level.boss && level.boss.alive && level.boss.invincible <= 0 && Math.abs(level.boss.x - player.x) < slamRadius + 50) damageBoss(1);
+}
+if (p.type === 'ramp' && p.slope) player.vx += p.slope * 2;
+if (p.type === 'rail' && player.rolling) player.vx *= 1.02;
+} else if (player.y < p.y + p.h && player.y > p.y && player.vy < 0) {
+player.y = p.y + p.h; player.vy = 0;
+}
+}
+}
+const magnetBonus = getArtifactBonus('magnet') + (hasUpgrade('magnet2') ? 2 : 0);
+const crystalRange = 25 + magnetBonus * 15;
+for (let c of level.crystals) {
+if (c.collected) continue;
+let dx = player.x - c.x, dy = player.y - c.y;
+if (Math.sqrt(dx*dx + dy*dy) < crystalRange) { c.collected = true; levelCrystals++; if (Math.random() < getArtifactBonus('fortune') * 0.15) { levelCrystals++; spawnParticles(c.x, c.y, 6, '#66ff66'); } playCollect(); spawnParticles(c.x, c.y, 5, level.biome.accent); }
+}
+for (let b of level.berries) {
+if (b.collected) continue;
+let dx = player.x - b.x, dy = player.y - b.y;
+if (Math.sqrt(dx*dx + dy*dy) < 30) { b.collected = true; player.berry = b.type; player.berryTimer = 10; playBerry(); spawnParticles(b.x, b.y, 15, BERRY_TYPES[b.type].color); }
+}
+for (let pu of level.powerups) {
+if (pu.collected) continue;
+let dx = player.x - pu.x, dy = player.y - pu.y;
+if (Math.sqrt(dx*dx + dy*dy) < 30) {
+pu.collected = true;
+if (pu.type === 'battery') { player.laserCharge = LASER_CHARGE_MAX; playTone(1400, 0.12, 'sine', 0.12); setTimeout(()=>playTone(1900, 0.15, 'sine', 0.1), 90); spawnParticles(pu.x, pu.y, 14, '#00ffff'); }
+else { player.gunCharge = GUN_CHARGE_MAX; playTone(700, 0.1, 'square', 0.12); setTimeout(()=>playTone(1000, 0.12, 'square', 0.1), 80); spawnParticles(pu.x, pu.y, 14, '#ffaa00'); }
+}
+}
+for (let drop of level.enemyDrops) {
+if (drop.collected) continue;
+drop.vy += drop.gravity; drop.x += drop.vx; drop.y += drop.vy; drop.life--;
+if (drop.y > 510) { drop.y = 510; drop.vy *= -0.4; drop.vx *= 0.7; }
+let dx = player.x - drop.x, dy = player.y - drop.y;
+if (Math.sqrt(dx*dx + dy*dy) < 30) { drop.collected = true; levelCrystals++; playCollect(); spawnParticles(drop.x, drop.y, 8, '#00ffaa'); }
+}
+level.enemyDrops = level.enemyDrops.filter(d => !d.collected && d.life > 0);
+for (let s of level.shards) {
+if (s.collected) continue;
+s.vy += 0.4; s.x += s.vx; s.y += s.vy;
+s.rotation += s.rotSpeed; s.bobPhase += 0.1; s.vx *= 0.98;
+if (s.y > 510) { s.y = 510; s.vy = -s.vy * 0.5; s.vx *= 0.8; if (Math.abs(s.vy) < 1) s.vy = 0; }
+if (s.x < 20) { s.x = 20; s.vx *= -0.7; }
+if (s.x > level.length - 20) { s.x = level.length - 20; s.vx *= -0.7; }
+let dx = player.x - s.x, dy = player.y - s.y;
+let dist = Math.sqrt(dx*dx + dy*dy);
+let magnetRange = 80 + magnetBonus * 30;
+let pullStrength = 0.8;
+if (level.autoPullActive) { magnetRange = 2000; pullStrength = SHARD_AUTO_PULL_FORCE; if (Math.random() < 0.05) playShardMagnet(); }
+if (dist < magnetRange) {
+const pull = (1 - dist / magnetRange) * pullStrength;
+s.vx += (dx / dist) * pull; s.vy += (dy / dist) * pull;
+}
+if (dist < 30) { s.collected = true; progress.shards++; levelShardsCollected++; saveProgress(); playShardCollect(); spawnParticles(s.x, s.y, 15, s.color); spawnParticles(s.x, s.y, 10, '#ffaa00'); }
+}
+if (!level.shardCollectionPhase) {
+for (let en of level.enemies) {
+if (!en.alive) continue;
+if (en.type === 'spike' || en.type === 'slime') {
+en.x += en.vx; en.shellRot += en.vx * 0.05;
+if (en.x < en.patrol.left || en.x > en.patrol.right) en.vx *= -1;
+} else if (en.type === 'phantom') {
+let dx = player.x - en.x, dy = player.y - en.y;
+let dist = Math.sqrt(dx*dx + dy*dy);
+if (dist < 300) en.chasing = true;
+if (en.chasing) { en.vx = dx > 0 ? 3 : -3; en.x += en.vx; en.shellRot += en.vx * 0.05; if (dist > 500) en.chasing = false; }
+} else if (en.type === 'flyer') {
+en.wingPhase += 0.3;
+const dx = player.x - en.x, dy = player.y - en.y;
+const dist = Math.sqrt(dx*dx + dy*dy);
+if (en.state === 'patrol') {
+en.patrolAngle += 0.02;
+en.x = en.homeX + Math.cos(en.patrolAngle) * 80;
+en.y = en.homeY + Math.sin(en.patrolAngle * 1.5) * 30;
+en.shellRot += 0.02; en.invulnerable = true;
+if (dist < 350) { en.state = 'swoop'; en.swoopTimer = 0; playFlyerSwoop(); spawnParticles(en.x, en.y, 10, '#ff6600'); }
+} else if (en.state === 'swoop') {
+en.invulnerable = false;
+const angle = Math.atan2(dy, dx);
+const swoopSpeed = 7 + (currentLevel / 100) * 3;
+en.vx = Math.cos(angle) * swoopSpeed; en.vy = Math.sin(angle) * swoopSpeed;
+en.x += en.vx; en.y += en.vy; en.swoopTimer++; en.shellRot += 0.2;
+spawnParticles(en.x, en.y, 1, '#ff3300');
+if (en.swoopTimer > 90 || en.y > 500 || en.y < 0) en.state = 'return';
+} else if (en.state === 'return') {
+en.invulnerable = true;
+const dxH = en.homeX - en.x, dyH = en.homeY - en.y;
+const distH = Math.sqrt(dxH*dxH + dyH*dyH);
+if (distH > 5) { en.x += (dxH / distH) * 3; en.y += (dyH / distH) * 3; }
+else en.state = 'patrol';
+}
+if (en.y < level.ceilingY + 20) en.y = level.ceilingY + 20;
+} else if (en.type === 'stretcher') {
+en.pulsePhase += 0.05;
+const dx = player.x - en.x, dy = player.y - en.y;
+const dist = Math.sqrt(dx*dx + dy*dy);
+if (en.state === 'idle') { if (dist < 200) { en.state = 'growing'; en.growTimer = 0; playStretcherGrow(); } }
+else if (en.state === 'growing') {
+en.growTimer++;
+if (en.growDirection === 'up') {
+const progress = Math.min(1, en.growTimer / 40);
+en.currentH = en.baseH + (en.targetH - en.baseH) * progress;
+en.h = en.currentH; en.y = en.platformY - en.currentH + en.baseH;
+if (progress >= 1) { en.state = 'retracting'; en.growTimer = 0; }
+} else {
+const progress = Math.min(1, en.growTimer / 40);
+en.sideExtend = en.targetSideExtend * progress;
+if (progress >= 1) { en.state = 'retracting'; en.growTimer = 0; }
+}
+} else if (en.state === 'retracting') {
+en.growTimer++;
+const progress = Math.min(1, en.growTimer / 30);
+if (en.growDirection === 'up') {
+en.currentH = en.baseH + (en.targetH - en.baseH) * (1 - progress);
+en.h = en.currentH; en.y = en.platformY - en.currentH + en.baseH;
+} else en.sideExtend = en.targetSideExtend * (1 - progress);
+if (progress >= 1) { en.state = 'idle'; en.growTimer = 0; en.currentH = en.baseH; en.h = en.baseH; en.y = en.platformY; en.sideExtend = 0; }
+}
+} else if (en.type === 'immortal') {
+en.shieldPhase += 0.08; en.teleportTimer++;
+en.x += en.vx; en.shellRot += en.vx * 0.05;
+if (en.x < en.patrol.left || en.x > en.patrol.right) en.vx *= -1;
+if (en.teleportTimer > 300) {
+const dx = player.x - en.x;
+if (Math.abs(dx) < 500 && Math.abs(dx) > 100) { en.x = player.x + (Math.random() > 0.5 ? 150 : -150); en.teleportTimer = 0; spawnParticles(en.x, en.y, 15, '#aa00ff'); playTone(600, 0.2, 'sine', 0.08); }
+else en.teleportTimer = 0;
+}
+} else if (en.type === 'bomber') {
+en.pulsePhase += 0.06; en.shellRot += 0.01;
+en.fireTimer++;
+const dx = player.x - en.x, dy = player.y - en.y;
+const dist = Math.sqrt(dx*dx + dy*dy);
+en.aimTelegraph = (dist < 700 && en.fireTimer > 95) ? Math.min(1, (en.fireTimer - 95) / 25) : 0;
+if (dist < 700 && en.fireTimer > 120) {
+en.fireTimer = 0;
+const startX = en.x, startY = en.y - 20;
+const targetX = player.x, targetY = player.y;
+const g = 0.35, T = 50;
+const vx = (targetX - startX) / T;
+const vy = (targetY - startY - 0.5 * g * T * T) / T;
+enemyProjectiles.push({ x: startX, y: startY, vx: vx, vy: vy, life: T + 20, gravity: g, rot: 0 });
+playTone(220, 0.15, 'sawtooth', 0.1); spawnParticles(startX, startY, 8, '#ff8800');
+}
+}
+if (player.invincible <= 0) {
+let dx = player.x - en.x, dy = player.y - en.y;
+let collisionW = (player.width + en.w) / 2;
+let collisionH = (player.height + en.h) / 2;
+if (en.type === 'stretcher') {
+if (en.growDirection === 'side' && en.sideExtend > 0) collisionW = (player.width + en.w + en.sideExtend * 2) / 2;
+if (en.growDirection === 'up' && en.currentH > en.baseH) { collisionH = (player.height + en.currentH) / 2; dy = player.y - (en.platformY - en.currentH/2); }
+}
+if (Math.abs(dx) < collisionW && Math.abs(dy) < collisionH) {
+if (en.type === 'flyer') {
+if (en.state === 'swoop' && !en.invulnerable) {
+if (player.rolling && Math.abs(player.vx) > 4) { en.alive = false; registerKill(); spawnParticles(en.x, en.y, 20, '#ff6600'); playFlyerDeath(); player.vx *= 1.2; spawnCrystalDrop(en.x, en.y); }
+else if (player.slamming) { en.alive = false; registerKill(); spawnParticles(en.x, en.y, 20, '#ff6600'); playFlyerDeath(); player.vy = -10; spawnCrystalDrop(en.x, en.y); }
+else { player.hp--; player.invincible = 60; player.vx = dx > 0 ? 8 : -8; player.vy = -8; playTone(100, 0.3, 'sawtooth', 0.15); spawnParticles(player.x, player.y, 10, '#ff0000'); if (player.hp <= 0) resetPlayer(); }
+} else { player.vx = -player.vx * 0.7; player.vy = -6; playImmortalBounce(); spawnParticles(en.x, en.y, 10, '#ffaa00'); player.invincible = 20; }
+} else if (en.immortal) {
+if (player.rolling && Math.abs(player.vx) > 4) { player.vx = -player.vx * 0.7; player.vy = -6; playImmortalBounce(); spawnParticles(en.x, en.y, 15, '#ffaa00'); player.invincible = 20; }
+else if (player.slamming) { player.vy = -12; player.slamming = false; playImmortalBounce(); spawnParticles(en.x, en.y, 15, '#ffaa00'); player.invincible = 20; }
+else { player.hp--; player.invincible = 60; player.vx = dx > 0 ? 8 : -8; player.vy = -8; playTone(100, 0.3, 'sawtooth', 0.15); spawnParticles(player.x, player.y, 10, '#ff0000'); if (player.hp <= 0) resetPlayer(); }
+} else {
+if (player.rolling && Math.abs(player.vx) > 4) { en.alive = false; registerKill(); spawnParticles(en.x, en.y, 12, '#ff0000'); playTone(200, 0.2, 'sawtooth', 0.1); player.vx *= 1.1; spawnCrystalDrop(en.x, en.y); }
+else if (player.slamming) { en.alive = false; registerKill(); spawnParticles(en.x, en.y, 12, '#ff0000'); spawnCrystalDrop(en.x, en.y); }
+else { player.hp--; player.invincible = 60; player.vx = dx > 0 ? 8 : -8; player.vy = -8; playTone(100, 0.3, 'sawtooth', 0.15); spawnParticles(player.x, player.y, 10, '#ff0000'); if (player.hp <= 0) resetPlayer(); }
+}
+}
+}
+}
+}
+if (level.boss && level.boss.alive) updateBoss();
+if (hasUpgrade('gun') && player.gunActive && player.gunCharge > 0 && player.gunCooldown <= 0) {
+bullets.push({ x: player.x + player.facing * 15, y: player.y, vx: player.facing * 15, vy: 0, life: 60, type: 'bullet' });
+player.gunCooldown = 8; playGunShot();
+}
+if (player.gunActive) {
+player.gunCharge -= 0.016;
+if (player.gunCharge <= 0) { player.gunCharge = 0; player.gunActive = false; playTone(120, 0.25, 'sawtooth', 0.1); }
+}
+if (hasUpgrade('laser') && player.laserActive && player.laserCharge > 0) {
+bullets.push({ x: player.x + player.facing * 15, y: player.y, vx: player.facing * 25, vy: 0, life: 30, type: 'laser', size: 6 });
+player.gunCooldown = 2;
+if (Math.random() < 0.1) playGunShot();
+player.laserCharge -= 0.016;
+if (player.laserCharge <= 0) { player.laserCharge = 0; player.laserActive = false; playTone(120, 0.25, 'sawtooth', 0.1); }
+}
+if (player.gunCooldown > 0) player.gunCooldown--;
+for (let bullet of bullets) {
+bullet.x += bullet.vx; bullet.y += bullet.vy; bullet.life--;
+for (let en of level.enemies) {
+if (!en.alive) continue;
+let dx = bullet.x - en.x, dy = bullet.y - en.y;
+if (Math.sqrt(dx*dx + dy*dy) < en.w/2) {
+if (!en.immortal) { en.alive = false; registerKill(); spawnParticles(en.x, en.y, 10, '#ffaa00'); spawnCrystalDrop(en.x, en.y); bullet.life = 0; }
+}
+}
+if (level.boss && level.boss.alive) {
+let dx = bullet.x - level.boss.x, dy = bullet.y - level.boss.y;
+if (Math.sqrt(dx*dx + dy*dy) < level.boss.w/2) { const gunDmg = 0.3 + getArtifactBonus('firepower') * 0.15; damageBoss(gunDmg); bullet.life = 0; spawnParticles(bullet.x, bullet.y, 5, '#ffaa00'); }
+}
+}
+bullets = bullets.filter(b => b.life > 0);
+for (let ep of enemyProjectiles) {
+ep.vy += ep.gravity; ep.x += ep.vx; ep.y += ep.vy; ep.life--; ep.rot += 0.15;
+if (player.invincible <= 0) {
+const pdx = player.x - ep.x, pdy = player.y - ep.y;
+if (Math.sqrt(pdx*pdx + pdy*pdy) < 22) {
+player.hp--; player.invincible = 60; player.vy = -8; player.vx = pdx > 0 ? -6 : 6;
+playTone(90, 0.3, 'sawtooth', 0.15); spawnParticles(player.x, player.y, 12, '#ff8800'); ep.life = 0;
+if (player.hp <= 0) resetPlayer();
+}
+}
+if (ep.y > 560) { spawnParticles(ep.x, 555, 10, '#ff6600'); ep.life = 0; }
+}
+enemyProjectiles = enemyProjectiles.filter(ep => ep.life > 0);
+if (hasUpgrade('heal')) {
+player.healTimer++;
+if (player.healTimer >= 1800) { player.healTimer = 0; if (player.hp < player.maxHp) { player.hp++; spawnParticles(player.x, player.y, 20, '#00ff00'); } }
+}
+const regenBonus = getArtifactBonus('regen');
+if (regenBonus > 0) {
+player.regenTimer = (player.regenTimer || 0) + 1;
+const regenInterval = Math.max(360, 1080 - regenBonus * 180);
+if (player.regenTimer >= regenInterval) { player.regenTimer = 0; if (player.hp < player.maxHp) { player.hp++; spawnParticles(player.x, player.y, 20, '#00ff66'); } }
+}
+if (hasUpgrade('shield')) {
+player.shieldTimer++;
+if (player.shieldTimer >= 600) { player.shieldActive = true; }
+}
+for (let h of level.hazards) {
+if (player.x > h.x && player.x < h.x + h.w && player.y + player.height > h.y && player.invincible <= 0) {
+if (player.shieldActive) { player.shieldActive = false; player.shieldTimer = 0; player.invincible = 60; spawnParticles(player.x, player.y, 20, '#00ffff'); }
+else { player.hp--; player.invincible = 60; player.vy = -10; playTone(80, 0.4, 'sawtooth', 0.15); if (player.hp <= 0) resetPlayer(); }
+}
+}
+if (currentLevel === 1001 && level.isFinalEnding && level.boss && !level.boss.alive && player.carryingSphere && !level.spherePlaced) {
+const pdx = player.x - level.pedestalX, pdy = player.y - level.pedestalY;
+if (Math.abs(pdx) < 40 && pdy > -60 && pdy < 20 && keys['KeyW']) {
+level.spherePlaced = true;
+player.carryingSphere = false; player.hasSphere = false;
+level.sphereY = level.pedestalY - 50;
+level.endingStarted = true; level.endingPhase = 0; level.endingTimer = 0;
+playSphereCraft(); spawnParticles(level.pedestalX, level.pedestalY - 50, 30, '#ffffff');
+document.getElementById('phaseHint').textContent = '✨ СФЕРА ПОДНИМАЕТСЯ... ✨';
+document.getElementById('phaseHint').style.display = 'block';
+}
+}
+if (!level.isBoss && !level.shardCollectionPhase && player.x >= level.goalX) { levelComplete = true; setTimeout(showVictory, 500); }
+if (player.y > FLOOR_Y) resetPlayer();
+if (player.invincible > 0) player.invincible--;
+if (ceilingHitEffect > 0) ceilingHitEffect--;
+if (Math.abs(player.vx) > 3 || player.rolling) player.trail.push({ x: player.x, y: player.y, life: 20, rolling: player.rolling });
+player.trail = player.trail.filter(t => { t.life--; return t.life > 0; });
+particles = particles.filter(p => { p.life--; p.x += p.vx; p.y += p.vy; p.vy += 0.1; return p.life > 0; });
+if (comboTimer > 0) { comboTimer--; if (comboTimer <= 0) comboCount = 0; }
+cameraX += (player.x - canvas.width/3 - cameraX) * 0.08;
+cameraY += (player.y - canvas.height/2 - cameraY) * 0.05;
+cameraY = Math.max(-100, Math.min(100, cameraY));
+cameraX = Math.max(0, Math.min(level.length - canvas.width, cameraX));
+player.speed = Math.abs(player.vx);
+document.getElementById('levelLabel').textContent = currentLevel === 'custom' ? 'CUSTOM' : currentLevel === 1001 ? 'LVL 1001 ★' : `LVL ${currentLevel}`;
+document.getElementById('biomeLabel').textContent = level.biome.name;
+document.getElementById('biomeLabel').style.color = level.biome.accent;
+document.getElementById('score').textContent = `💎 ${levelCrystals}`;
+document.getElementById('shardCount').textContent = `🔶 ${progress.shards}/${ARTIFACT_SHARD_COST}`;
+const totalBerries = Object.values(progress.berryInventory).reduce((a,b)=>a+b,0);
+document.getElementById('berryHud').textContent = `🍓 ${totalBerries}`;
+let gunHudParts = [];
+if (hasUpgrade('gun')) {
+const col = player.gunCharge <= 0 ? '#553355' : player.gunActive ? '#ff4444' : (player.gunCharge < 10 ? '#ff6666' : '#ffaa66');
+gunHudParts.push(`<span style="color:${col};">🔫[X] ${Math.ceil(player.gunCharge)}s (📦×${progress.ammoStock||0})</span>`);
+}
+if (hasUpgrade('laser')) {
+const col = player.laserCharge <= 0 ? '#553355' : player.laserActive ? '#ff44ff' : (player.laserCharge < 8 ? '#ff6666' : '#88ddff');
+gunHudParts.push(`<span style="color:${col};">⚡[C] ${Math.ceil(player.laserCharge)}s (🔋×${progress.batteryStock||0})</span>`);
+}
+document.getElementById('gunHud').innerHTML = gunHudParts.length ? gunHudParts.join(' ') : '<span style="color:#888;">-</span>';
+document.getElementById('speed').textContent = `⚡ ${Math.floor(player.speed * 10)}`;
+}
+
+function updateFinalEnding() {
+level.endingTimer++;
+const phase = level.endingPhase;
+const hint = document.getElementById('phaseHint');
+if (phase === 0) {
+level.sphereY -= 1.2;
+if (level.sphereY < 150) {
+level.endingPhase = 1; level.endingTimer = 0; playSphereBurst();
+for (let i = 0; i < 40; i++) {
+const angle = (i / 40) * Math.PI * 2 + Math.random() * 0.3;
+const speed = 3 + Math.random() * 8;
+level.sphereFragments.push({ x: level.pedestalX, y: level.sphereY, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 2, size: 3 + Math.random() * 6, rotation: Math.random() * Math.PI * 2, rotSpeed: (Math.random() - 0.5) * 0.3, life: 120 + Math.random() * 60, color: ['#ffffff','#ffffaa','#aaffff','#ffaaff','#aaffaa'][Math.floor(Math.random()*5)], gravity: 0.15 });
+}
+for (let i = 0; i < 100; i++) {
+const angle = Math.random() * Math.PI * 2;
+const speed = 2 + Math.random() * 12;
+particles.push({ x: level.pedestalX, y: level.sphereY, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, life: 80 + Math.random() * 60, color: ['#ffffff','#ffff00','#ff88ff','#88ffff','#ffaa00','#aaffaa'][Math.floor(Math.random()*6)], size: 2 + Math.random() * 5 });
+}
+hint.textContent = '💥 СФЕРА РАЗРЫВАЕТСЯ! 💥';
+}
+} else if (phase === 1) {
+level.colorRestore = Math.min(1, level.endingTimer / 300);
+for (let f of level.sphereFragments) { f.vy += f.gravity; f.x += f.vx; f.y += f.vy; f.rotation += f.rotSpeed; f.vx *= 0.99; f.life--; if (f.y > 510) { f.y = 510; f.vy *= -0.5; f.vx *= 0.8; } }
+level.sphereFragments = level.sphereFragments.filter(f => f.life > 0);
+if (level.endingTimer === 30) hint.textContent = '🌤️ НЕБО СТАНОВИТСЯ ГОЛУБЫМ...';
+else if (level.endingTimer === 100) hint.textContent = '🌱 ТРАВА ЗЕЛЕНЕЕТ...';
+else if (level.endingTimer === 180) {
+hint.textContent = '🌸 ЦВЕТЫ РАСПУСКАЮТСЯ...';
+for (let i = 0; i < 30; i++) level.flowers.push({ x: 100 + Math.random() * (level.length - 200), y: 515, size: 5 + Math.random() * 8, hue: Math.random() * 360, swayPhase: Math.random() * Math.PI * 2 });
+} else if (level.endingTimer === 250) {
+hint.textContent = '🦋 БАБОЧКИ ПОЯВЛЯЮТСЯ...';
+for (let i = 0; i < 8; i++) level.butterflies.push({ x: Math.random() * level.length, y: 200 + Math.random() * 200, vx: (Math.random() - 0.5) * 2, vy: (Math.random() - 0.5) * 1, hue: Math.random() * 360, wingPhase: Math.random() * Math.PI * 2, targetX: Math.random() * level.length, targetY: 100 + Math.random() * 300 });
+}
+if (level.endingTimer >= 300) {
+level.endingPhase = 2; level.endingTimer = 0;
+hint.textContent = '🐌 УЛИТКИ ПРИПОЛЗАЮТ С ДВУХ СТОРОН...';
+}
+} else if (phase === 2) {
+for (let f of level.sphereFragments) { f.vy += f.gravity; f.x += f.vx; f.y += f.vy; f.rotation += f.rotSpeed; f.vx *= 0.99; f.life--; if (f.y > 510) { f.y = 510; f.vy *= -0.5; f.vx *= 0.8; } }
+level.sphereFragments = level.sphereFragments.filter(f => f.life > 0);
+for (let b of level.butterflies) {
+b.wingPhase += 0.3;
+let dx = b.targetX - b.x, bdy = b.targetY - b.y;
+let dist = Math.sqrt(dx*dx + bdy*bdy);
+if (dist < 20) { b.targetX = Math.random() * level.length; b.targetY = 100 + Math.random() * 300; }
+b.vx += (dx / dist) * 0.05; b.vy += (bdy / dist) * 0.05;
+b.vx = Math.max(-2, Math.min(2, b.vx)); b.vy = Math.max(-1.5, Math.min(1.5, b.vy));
+b.x += b.vx; b.y += b.vy + Math.sin(b.wingPhase * 0.3) * 0.5;
+}
+if (level.endingTimer % 30 === 0 && level.friendlySnails.length < 8) {
+const snailCount = level.friendlySnails.length;
+const hues = [0, 30, 60, 120, 180, 210, 270, 300];
+const fromLeft = snailCount < 4;
+level.friendlySnails.push({
+x: fromLeft ? -50 - snailCount * 40 : level.length + 50 + (snailCount - 4) * 40,
+y: 490,
+vx: fromLeft ? 0.8 + Math.random() * 0.4 : -0.8 - Math.random() * 0.4,
+hue: hues[snailCount],
+shellRot: 0, arrived: false,
+targetX: fromLeft ? level.pedestalX - 140 + snailCount * 40 : level.pedestalX + 40 + (snailCount - 4) * 40,
+eyeBlink: 0, smilePhase: 0, fromLeft
+});
+playSnailArrive();
+hint.textContent = `🐌 УЛИТКА ${snailCount + 1}/8 ПРИБЛИЖАЕТСЯ...`;
+}
+for (let s of level.friendlySnails) {
+if (!s.arrived) {
+if (s.fromLeft && s.x < s.targetX) { s.x += s.vx; s.shellRot += s.vx * 0.1; }
+else if (!s.fromLeft && s.x > s.targetX) { s.x += s.vx; s.shellRot += Math.abs(s.vx) * 0.1; }
+else s.arrived = true;
+}
+s.eyeBlink = (s.eyeBlink + 1) % 180;
+s.smilePhase += 0.05;
+}
+if (level.friendlySnails.length === 8 && level.friendlySnails.every(s => s.arrived)) {
+if (level.endingTimer > level.friendlySnails.length * 30 + 90) {
+level.endingPhase = 3; level.endingTimer = 0;
+hint.textContent = '🎈 ВСЁ ЗАМИРАЕТ... ШАРИКИ ЛЕТЯТ В НЕБО! 🎈';
+setTimeout(() => { document.getElementById('endJourneyBtn').style.display = 'block'; hint.style.display = 'none'; }, 2000);
+}
+}
+} else if (phase === 3) {
+if (level.endingTimer % 12 === 0) {
+level.balloons.push({ x: Math.random() * level.length, y: 650, vy: -0.8 - Math.random() * 1.2, color: ['#ff6666','#66ff66','#6666ff','#ffff66','#ff66ff','#66ffff','#ffaa66','#aa66ff'][Math.floor(Math.random()*8)], size: 18 + Math.random() * 18, wobble: Math.random() * Math.PI * 2, wobbleSpeed: 0.02 + Math.random() * 0.03, rotation: 0, rotSpeed: (Math.random() - 0.5) * 0.02 });
+if (Math.random() < 0.1) playBalloonPop();
+}
+for (let b of level.balloons) { b.y += b.vy; b.wobble += b.wobbleSpeed; b.x += Math.sin(b.wobble) * 0.5; b.rotation += b.rotSpeed; }
+level.balloons = level.balloons.filter(b => b.y > -200);
+for (let b of level.butterflies) {
+b.wingPhase += 0.3;
+let dx = b.targetX - b.x, bdy = b.targetY - b.y;
+let dist = Math.sqrt(dx*dx + bdy*bdy);
+if (dist < 20) { b.targetX = Math.random() * level.length; b.targetY = 100 + Math.random() * 300; }
+b.vx += (dx / dist) * 0.05; b.vy += (bdy / dist) * 0.05;
+b.vx = Math.max(-2, Math.min(2, b.vx)); b.vy = Math.max(-1.5, Math.min(1.5, b.vy));
+b.x += b.vx; b.y += b.vy + Math.sin(b.wingPhase * 0.3) * 0.5;
+}
+for (let s of level.friendlySnails) { s.eyeBlink = (s.eyeBlink + 1) % 180; s.smilePhase += 0.05; }
+for (let f of level.flowers) f.swayPhase += 0.03;
+level.endingTimer++;
+}
+particles = particles.filter(p => { p.life--; p.x += p.vx; p.y += p.vy; p.vy += 0.05; p.vx *= 0.98; return p.life > 0; });
+cameraX += (player.x - canvas.width/3 - cameraX) * 0.03;
+cameraX = Math.max(0, Math.min(level.length - canvas.width, cameraX));
+}
+function endJourney() {
+if (!level || !level.isFinalEnding) return;
+document.getElementById('endJourneyBtn').style.display = 'none';
+document.getElementById('phaseHint').style.display = 'none';
+progress.endingPlayed = true; saveProgress();
+const overlay = document.getElementById('endingOverlay'); overlay.style.display = 'flex';
+const textEl = document.getElementById('endingText');
+const messages = [
+{ text: '🌟 СФЕРА СВЕТА ВОЗРОДИЛАСЬ 🌟', delay: 0 },
+{ text: 'Твист освободил планету Хеликс от Стазиса...', delay: 4000 },
+{ text: 'Цвета вернулись в мир', delay: 8000 },
+{ text: 'Улитки свободны снова', delay: 12000 },
+{ text: '🎈 И мир наполнился радостью 🎈', delay: 16000 },
+{ text: '✨ КОНЕЦ ✨', delay: 20000 }
+];
+playEndingMusic();
+messages.forEach(msg => {
+setTimeout(() => {
+textEl.textContent = msg.text;
+textEl.style.animation = 'none'; textEl.offsetHeight;
+textEl.style.animation = 'spherePulse 3s ease-in';
+}, msg.delay);
+});
+setTimeout(() => {
+textEl.innerHTML = `<div style="font-size:20px; margin-bottom:20px;">🏆 ТЫ ПРОШЁЛ ИГРУ! 🏆</div><div style="font-size:14px; margin-bottom:30px;">Спасибо, что спас мир Твиста</div><button class="btn" onclick="showMenu('mainMenu')">ГЛАВНОЕ МЕНЮ</button>`;
+}, 25000);
+}
+
+// ====================================================================
+// ================== НОВАЯ КРАСИВАЯ ОТРИСОВКА ======================
+// ====================================================================
+
+function drawBackground(b) {
+// Градиент неба
+let gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+if (level.isFinalEnding && level.colorRestore > 0) {
+const cr = level.colorRestore;
+gradient.addColorStop(0, lerpColor('#000000', '#87ceeb', cr));
+gradient.addColorStop(0.5, lerpColor('#1a0015', '#b0e0e6', cr));
+gradient.addColorStop(1, lerpColor('#0a0000', '#90ee90', cr));
+} else {
+gradient.addColorStop(0, b.bg1);
+gradient.addColorStop(1, b.bg2);
+}
+ctx.fillStyle = gradient;
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+// Параллакс звезды/пыль
+ctx.fillStyle = 'rgba(255,255,255,0.3)';
+for(let i=0; i<50; i++) {
+const x = ((i * 137.5 - cameraX * 0.1) % canvas.width + canvas.width) % canvas.width;
+const y = ((i * 241.2) % canvas.height);
+ctx.beginPath();
+ctx.arc(x, y, 1, 0, Math.PI*2);
+ctx.fill();
+}
+
+// Далёкие горы (параллакс 0.3)
+ctx.fillStyle = 'rgba(0,0,0,0.4)';
+ctx.beginPath();
+ctx.moveTo(0, canvas.height);
+for(let i=0; i<=canvas.width; i+=100) {
+const h = 150 + Math.sin((i + cameraX * 0.3) * 0.01) * 80 + Math.cos((i + cameraX * 0.3) * 0.02) * 40;
+ctx.lineTo(i, canvas.height - h);
+}
+ctx.lineTo(canvas.width, canvas.height);
+ctx.fill();
+
+// Ближние холмы (параллакс 0.5)
+ctx.fillStyle = 'rgba(0,0,0,0.6)';
+ctx.beginPath();
+ctx.moveTo(0, canvas.height);
+for(let i=0; i<=canvas.width; i+=80) {
+const h = 100 + Math.sin((i + cameraX * 0.5) * 0.015) * 50 + Math.cos((i + cameraX * 0.5) * 0.03) * 30;
+ctx.lineTo(i, canvas.height - h);
+}
+ctx.lineTo(canvas.width, canvas.height);
+ctx.fill();
+}
+
+function drawPlatform(p, b) {
+if (p.type === 'wall') {
+ctx.fillStyle = '#111';
+ctx.fillRect(p.x, p.y, p.w, p.h);
+return;
+}
+if (p.type === 'ground') {
+let grd = ctx.createLinearGradient(p.x, p.y, p.x, p.y + p.h);
+if (level.isFinalEnding && level.colorRestore > 0) {
+const cr = level.colorRestore;
+grd.addColorStop(0, lerpColor('#2a2a2a', '#4a9b3a', cr));
+grd.addColorStop(1, lerpColor('#0a0a0a', '#3a2010', cr));
+} else {
+grd.addColorStop(0, b.ground);
+grd.addColorStop(1, '#050505');
+}
+ctx.fillStyle = grd;
+ctx.fillRect(p.x, p.y, p.w, p.h);
+
+// Текстура земли (штриховка)
+ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+ctx.lineWidth = 1;
+for(let i=p.x; i<p.x+p.w; i+=20) {
+ctx.beginPath();
+ctx.moveTo(i, p.y+10);
+ctx.lineTo(i+10, p.y+p.h);
+ctx.stroke();
+}
+
+// Светящийся верхний край
+ctx.shadowColor = b.accent;
+ctx.shadowBlur = 15;
+ctx.strokeStyle = b.accent;
+ctx.lineWidth = 3;
+ctx.beginPath();
+ctx.moveTo(p.x, p.y);
+ctx.lineTo(p.x + p.w, p.y);
+ctx.stroke();
+ctx.shadowBlur = 0;
+} else if (p.type === 'platform') {
+const grd = ctx.createLinearGradient(p.x, p.y, p.x, p.y + p.h);
+grd.addColorStop(0, '#555');
+grd.addColorStop(1, '#222');
+ctx.fillStyle = grd;
+ctx.fillRect(p.x, p.y, p.w, p.h);
+
+// Металлический блик
+ctx.fillStyle = 'rgba(255,255,255,0.1)';
+ctx.fillRect(p.x, p.y, p.w, 2);
+
+// Светящиеся края
+ctx.shadowColor = b.accent2;
+ctx.shadowBlur = 8;
+ctx.strokeStyle = b.accent2;
+ctx.lineWidth = 1.5;
+ctx.strokeRect(p.x, p.y, p.w, p.h);
+ctx.shadowBlur = 0;
+} else if (p.type === 'ramp') {
+ctx.fillStyle = '#444';
+ctx.beginPath();
+ctx.moveTo(p.x, p.y + p.h);
+ctx.lineTo(p.x + p.w, p.y);
+ctx.lineTo(p.x + p.w, p.y + p.h);
+ctx.closePath();
+ctx.fill();
+ctx.strokeStyle = b.accent;
+ctx.lineWidth = 2;
+ctx.stroke();
+} else if (p.type === 'trampoline') {
+let bounce = Math.sin(gameTime * 5) * 3;
+const grd = ctx.createLinearGradient(p.x, p.y, p.x, p.y + p.h);
+grd.addColorStop(0, b.accent2);
+grd.addColorStop(1, '#333');
+ctx.fillStyle = grd;
+ctx.shadowColor = b.accent2;
+ctx.shadowBlur = 15;
+ctx.fillRect(p.x, p.y + bounce, p.w, p.h);
+ctx.shadowBlur = 0;
+}
+}
+
+function drawCrystal(c, b) {
+let bob = Math.sin(gameTime * 3 + c.bobOffset) * 5;
+ctx.save();
+ctx.translate(c.x, c.y + bob);
+ctx.rotate(gameTime * 2);
+
+// Внешнее свечение
+ctx.shadowColor = b.accent;
+ctx.shadowBlur = 20;
+
+// Основной ромб
+ctx.fillStyle = b.accent;
+ctx.beginPath();
+ctx.moveTo(0, -10); ctx.lineTo(8, 0); ctx.lineTo(0, 10); ctx.lineTo(-8, 0);
+ctx.closePath();
+ctx.fill();
+
+// Внутренний яркий ромб
+ctx.shadowBlur = 0;
+ctx.fillStyle = '#ffffff';
+ctx.globalAlpha = 0.8;
+ctx.beginPath();
+ctx.moveTo(0, -5); ctx.lineTo(4, 0); ctx.lineTo(0, 5); ctx.lineTo(-4, 0);
+ctx.closePath();
+ctx.fill();
+ctx.globalAlpha = 1;
+
+// Блик
+ctx.fillStyle = 'rgba(255,255,255,0.9)';
+ctx.beginPath();
+ctx.arc(-2, -3, 2, 0, Math.PI*2);
+ctx.fill();
+
+ctx.restore();
+}
+
+function drawBerry(berry) {
+let bob = Math.sin(gameTime * 2) * 8;
+let color = BERRY_TYPES[berry.type].color;
+ctx.save();
+ctx.translate(berry.x, berry.y + bob);
+
+// Свечение
+ctx.shadowColor = color;
+ctx.shadowBlur = 20;
+
+// Ягода
+const grd = ctx.createRadialGradient(-3, -3, 1, 0, 0, 12);
+grd.addColorStop(0, '#ffffff');
+grd.addColorStop(0.3, color);
+grd.addColorStop(1, '#000000');
+ctx.fillStyle = grd;
+ctx.beginPath();
+ctx.arc(0, 0, 12, 0, Math.PI * 2);
+ctx.fill();
+ctx.shadowBlur = 0;
+
+// Листик
+ctx.fillStyle = '#00ff00';
+ctx.beginPath();
+ctx.ellipse(0, -12, 4, 2, -0.5, 0, Math.PI*2);
+ctx.fill();
+
+// Блик
+ctx.fillStyle = 'rgba(255,255,255,0.7)';
+ctx.beginPath();
+ctx.arc(-4, -4, 3, 0, Math.PI*2);
+ctx.fill();
+
+ctx.restore();
+}
+
+function drawShard(s) {
+ctx.save();
+ctx.translate(s.x, s.y);
+const pulse = Math.sin(s.bobPhase) * 0.3 + 1;
+const size = s.size * pulse;
+
+// Орбитальное кольцо
+ctx.strokeStyle = s.color;
+ctx.lineWidth = 2;
+ctx.globalAlpha = 0.5;
+ctx.beginPath();
+ctx.ellipse(0, 0, size * 1.5, size * 0.5, gameTime * 2, 0, Math.PI*2);
+ctx.stroke();
+ctx.globalAlpha = 1;
+
+// Свечение
+ctx.shadowColor = s.color;
+ctx.shadowBlur = 30;
+
+// Основной осколок
+ctx.rotate(s.rotation);
+const grd = ctx.createRadialGradient(0, 0, 0, 0, 0, size);
+grd.addColorStop(0, '#ffffff');
+grd.addColorStop(0.4, s.color);
+grd.addColorStop(1, s.color2);
+ctx.fillStyle = grd;
+ctx.beginPath();
+for (let i = 0; i < 6; i++) {
+const angle = (i / 6) * Math.PI * 2;
+const r = size * (0.7 + Math.sin(i * 2.5) * 0.3);
+const x = Math.cos(angle) * r, y = Math.sin(angle) * r;
+if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+}
+ctx.closePath();
+ctx.fill();
+
+// Внутреннее ядро
+ctx.shadowBlur = 0;
+ctx.fillStyle = '#ffffff';
+ctx.beginPath();
+ctx.arc(0, 0, size * 0.3, 0, Math.PI*2);
+ctx.fill();
+
+ctx.restore();
+}
+
+function drawShell(x, y, r, color, accent, rotation, isPlayer = false) {
+ctx.save();
+ctx.translate(x, y);
+ctx.rotate(rotation);
+
+// Тень под панцирем
+ctx.fillStyle = 'rgba(0,0,0,0.3)';
+ctx.beginPath();
+ctx.ellipse(2, 5, r, r*0.8, 0, 0, Math.PI*2);
+ctx.fill();
+
+// Основной градиент панциря
+const shellGrd = ctx.createRadialGradient(-r*0.3, -r*0.3, 0, 0, 0, r);
+shellGrd.addColorStop(0, color);
+shellGrd.addColorStop(0.7, accent);
+shellGrd.addColorStop(1, '#111');
+ctx.fillStyle = shellGrd;
+ctx.shadowColor = color;
+ctx.shadowBlur = 10;
+ctx.beginPath();
+ctx.arc(0, 0, r, 0, Math.PI * 2);
+ctx.fill();
+ctx.shadowBlur = 0;
+
+// Рельефные спирали
+ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+ctx.lineWidth = 2;
+ctx.beginPath();
+for (let a = 0; a < Math.PI * 4; a += 0.1) {
+const rad = (a / (Math.PI * 4)) * r * 0.9;
+const px = Math.cos(a) * rad;
+const py = Math.sin(a) * rad;
+if (a === 0) ctx.moveTo(px, py);
+else ctx.lineTo(px, py);
+}
+ctx.stroke();
+
+// Светлая спираль (блик)
+ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+ctx.lineWidth = 1;
+ctx.beginPath();
+for (let a = 0.5; a < Math.PI * 4; a += 0.1) {
+const rad = (a / (Math.PI * 4)) * r * 0.9 - 1;
+const px = Math.cos(a) * rad;
+const py = Math.sin(a) * rad;
+if (a === 0.5) ctx.moveTo(px, py);
+else ctx.lineTo(px, py);
+}
+ctx.stroke();
+
+// Глянцевый блик (Specular highlight)
+ctx.fillStyle = 'rgba(255,255,255,0.6)';
+ctx.beginPath();
+ctx.ellipse(-r*0.4, -r*0.4, r*0.3, r*0.15, -0.5, 0, Math.PI*2);
+ctx.fill();
+
+ctx.restore();
+}
+
+function drawSnailEnemy(en, options = {}) {
+const {
+shellColor = '#666677', shellAccent = '#444455',
+bodyColor = '#888899', bodyAccent = '#555566',
+eyeColor = '#ff0000', shellSize = 1, shellRotation = 0,
+extraSpikes = 0, slime = false, ghost = false, wings = false,
+multipleEyes = 1, aura = null, vulnerable = false, cracked = false
+} = options;
+
+ctx.save();
+ctx.translate(en.x, en.y);
+
+if (ghost) {
+ctx.globalAlpha = 0.5 + Math.sin(gameTime * 5 + (en.pulsePhase || 0)) * 0.2;
+// Спектральный шлейф-послесвечение позади призрака
+for (let t = 1; t <= 3; t++) {
+ctx.save();
+ctx.globalAlpha = (0.18 - t * 0.05) * (0.6 + Math.sin(gameTime*5)*0.2);
+ctx.translate(-t * 10 * Math.sign(en.vx || -1) * -1, Math.sin(gameTime * 3 + t) * 3);
+ctx.fillStyle = shellColor;
+ctx.beginPath();
+ctx.ellipse(0, en.h*0.25, en.w*0.4, en.h*0.28, 0, 0, Math.PI*2);
+ctx.fill();
+ctx.restore();
+}
+}
+
+if (aura || vulnerable) {
+ctx.strokeStyle = vulnerable ? '#ff0000' : aura;
+ctx.lineWidth = 2;
+ctx.globalAlpha = 0.4 + Math.sin(gameTime * 4) * 0.3;
+ctx.shadowColor = ctx.strokeStyle;
+ctx.shadowBlur = 15;
+ctx.beginPath();
+ctx.arc(0, 0, en.w/2 + 10, 0, Math.PI * 2);
+ctx.stroke();
+ctx.shadowBlur = 0;
+ctx.globalAlpha = ghost ? 0.5 + Math.sin(gameTime * 5) * 0.2 : 1;
+}
+
+// Тело
+const bodyW = en.w * 0.9;
+const bodyH = en.h * 0.55;
+if (slime) {
+const slimeWobble = Math.sin(gameTime * 3) * 2;
+ctx.fillStyle = bodyColor;
+ctx.shadowColor = '#88ff88';
+ctx.shadowBlur = 10;
+ctx.beginPath();
+ctx.ellipse(0, bodyH/2, bodyW/2 + slimeWobble, bodyH/2 + 2, 0, 0, Math.PI * 2);
+ctx.fill();
+ctx.shadowBlur = 0;
+// Капли токсичной кислоты
+for (let i = 0; i < 3; i++) {
+const dripPhase = (gameTime * 1.5 + i * 2.1) % 3;
+const dripX = -bodyW/2 + 0.2*bodyW + i * bodyW*0.35;
+const dripY = bodyH/2 + dripPhase * 8;
+ctx.globalAlpha = Math.max(0, 1 - dripPhase / 3);
+ctx.fillStyle = '#aaff44';
+ctx.shadowColor = '#aaff44'; ctx.shadowBlur = 6;
+ctx.beginPath();
+ctx.ellipse(dripX, dripY, 2.5, 4, 0, 0, Math.PI*2);
+ctx.fill();
+ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+}
+} else {
+const grd = ctx.createRadialGradient(0, bodyH/2, 0, 0, bodyH/2, bodyW/2);
+grd.addColorStop(0, bodyColor);
+grd.addColorStop(1, bodyAccent);
+ctx.fillStyle = grd;
+ctx.beginPath();
+ctx.ellipse(0, bodyH/2, bodyW/2, bodyH/2, 0, 0, Math.PI * 2);
+ctx.fill();
+ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+ctx.lineWidth = 1;
+ctx.stroke();
+// Глянцевый блик на теле — придаёт объём
+ctx.fillStyle = 'rgba(255,255,255,0.25)';
+ctx.beginPath();
+ctx.ellipse(-bodyW*0.18, bodyH*0.28, bodyW*0.22, bodyH*0.12, -0.4, 0, Math.PI*2);
+ctx.fill();
+}
+
+// Панцирь
+const shellR = (en.w * 0.45) * shellSize;
+drawShell(-shellR * 0.3, -shellR * 0.5, shellR, shellColor, shellAccent, shellRotation);
+
+// Трещины со свечением (бронированные улитки в ярости)
+if (cracked) {
+ctx.save();
+ctx.translate(-shellR * 0.3, -shellR * 0.5);
+ctx.rotate(shellRotation);
+ctx.strokeStyle = `rgba(255,60,20,${0.5 + Math.sin(gameTime*6)*0.4})`;
+ctx.lineWidth = 1.5;
+ctx.shadowColor = '#ff4400'; ctx.shadowBlur = 6;
+ctx.beginPath();
+ctx.moveTo(-shellR*0.5, -shellR*0.2); ctx.lineTo(-shellR*0.1, shellR*0.1); ctx.lineTo(shellR*0.3, -shellR*0.3);
+ctx.moveTo(shellR*0.1, shellR*0.4); ctx.lineTo(shellR*0.4, shellR*0.1);
+ctx.stroke();
+ctx.shadowBlur = 0;
+ctx.restore();
+}
+
+// Шипы
+if (extraSpikes > 0) {
+ctx.save();
+ctx.translate(-shellR * 0.3, -shellR * 0.5);
+ctx.rotate(shellRotation);
+ctx.fillStyle = '#ccccdd';
+ctx.strokeStyle = '#222';
+ctx.lineWidth = 1;
+for (let i = 0; i < extraSpikes; i++) {
+const angle = (i / extraSpikes) * Math.PI * 2;
+const sx = Math.cos(angle) * shellR;
+const sy = Math.sin(angle) * shellR;
+const ex = Math.cos(angle) * (shellR + 12);
+const ey = Math.sin(angle) * (shellR + 12);
+ctx.beginPath();
+ctx.moveTo(sx - Math.cos(angle + Math.PI/2) * 3, sy - Math.sin(angle + Math.PI/2) * 3);
+ctx.lineTo(ex, ey);
+ctx.lineTo(sx + Math.cos(angle + Math.PI/2) * 3, sy + Math.sin(angle + Math.PI/2) * 3);
+ctx.closePath();
+ctx.fill();
+ctx.stroke();
+}
+ctx.restore();
+}
+
+// Антенны
+const antennaBaseX = bodyW * 0.3;
+const antennaWave = Math.sin(gameTime * 4 + (en.pulsePhase || 0)) * 3;
+ctx.strokeStyle = bodyColor;
+ctx.lineWidth = 2;
+ctx.beginPath();
+ctx.moveTo(antennaBaseX - 3, 0);
+ctx.quadraticCurveTo(antennaBaseX - 5 + antennaWave, -10, antennaBaseX - 2, -15);
+ctx.stroke();
+ctx.beginPath();
+ctx.moveTo(antennaBaseX + 3, 0);
+ctx.quadraticCurveTo(antennaBaseX + 5 - antennaWave, -10, antennaBaseX + 2, -15);
+ctx.stroke();
+
+// Глаза (одна или несколько пар — древние улитки видят всё)
+const eyePairs = Math.max(1, multipleEyes);
+for (let pIdx = 0; pIdx < eyePairs; pIdx++) {
+const ringAngle = (pIdx / eyePairs) * Math.PI * 2 + gameTime * 0.3;
+const eox = pIdx === 0 ? 0 : Math.cos(ringAngle) * (en.w * 0.28);
+const eoy = pIdx === 0 ? 0 : Math.sin(ringAngle) * (en.w * 0.2) - en.w*0.15;
+ctx.save();
+ctx.globalAlpha = 0.25 + Math.sin(gameTime * 5 + pIdx) * 0.1;
+ctx.fillStyle = eyeColor;
+ctx.shadowColor = eyeColor; ctx.shadowBlur = 10;
+ctx.beginPath();
+ctx.arc(antennaBaseX - 2 + eox, -15 + eoy, 5, 0, Math.PI * 2);
+ctx.arc(antennaBaseX + 2 + eox, -15 + eoy, 5, 0, Math.PI * 2);
+ctx.fill();
+ctx.restore();
+ctx.fillStyle = '#fff';
+ctx.beginPath();
+ctx.arc(antennaBaseX - 2 + eox, -15 + eoy, 3, 0, Math.PI * 2);
+ctx.arc(antennaBaseX + 2 + eox, -15 + eoy, 3, 0, Math.PI * 2);
+ctx.fill();
+ctx.shadowColor = eyeColor;
+ctx.shadowBlur = 8;
+ctx.fillStyle = eyeColor;
+ctx.beginPath();
+ctx.arc(antennaBaseX - 2 + eox, -15 + eoy, 1.5, 0, Math.PI * 2);
+ctx.arc(antennaBaseX + 2 + eox, -15 + eoy, 1.5, 0, Math.PI * 2);
+ctx.fill();
+ctx.shadowBlur = 0;
+}
+
+// Крылья
+if (wings) {
+const wingFlap = Math.sin(gameTime * 12) * 15;
+ctx.fillStyle = vulnerable ? '#aa666688' : '#888899aa';
+ctx.strokeStyle = vulnerable ? '#ff4444' : '#555';
+ctx.lineWidth = 1;
+ctx.beginPath();
+ctx.moveTo(-bodyW/2, 0);
+ctx.quadraticCurveTo(-bodyW/2 - 20, -wingFlap - 10, -bodyW/2 - 25, -wingFlap);
+ctx.quadraticCurveTo(-bodyW/2 - 15, -wingFlap + 5, -bodyW/2, 5);
+ctx.closePath();
+ctx.fill();
+ctx.stroke();
+ctx.beginPath();
+ctx.moveTo(bodyW/2, 0);
+ctx.quadraticCurveTo(bodyW/2 + 20, -wingFlap - 10, bodyW/2 + 25, -wingFlap);
+ctx.quadraticCurveTo(bodyW/2 + 15, -wingFlap + 5, bodyW/2, 5);
+ctx.closePath();
+ctx.fill();
+ctx.stroke();
+}
+
+ctx.restore();
+}
+
+function drawCloudPuff(x, y, scale, phase) {
+ctx.save();
+ctx.translate(x, y);
+ctx.scale(scale, scale);
+const bob = Math.sin(phase) * 2;
+ctx.fillStyle = 'rgba(255,255,255,0.55)';
+ctx.shadowColor = 'rgba(200,220,255,0.8)'; ctx.shadowBlur = 18;
+const puffs = [[-22, 4+bob, 16], [0, -4+bob, 20], [22, 4+bob, 16], [-10, 10+bob, 14], [12, 10+bob, 14]];
+for (const [px, py, pr] of puffs) {
+ctx.beginPath();
+ctx.arc(px, py, pr, 0, Math.PI * 2);
+ctx.fill();
+}
+ctx.shadowBlur = 0;
+ctx.restore();
+}
+
+function drawBomberSnail(en) {
+ctx.save();
+ctx.translate(en.x, en.y);
+const pulse = Math.sin(en.pulsePhase) * 0.15 + 1;
+// Тело
+const bodyW = en.w * 0.9, bodyH = en.h * 0.55;
+const grd = ctx.createRadialGradient(0, bodyH/2, 0, 0, bodyH/2, bodyW/2);
+grd.addColorStop(0, '#9a8866'); grd.addColorStop(1, '#5a4a33');
+ctx.fillStyle = grd;
+ctx.beginPath(); ctx.ellipse(0, bodyH/2, bodyW/2, bodyH/2, 0, 0, Math.PI*2); ctx.fill();
+// Панцирь-мортира (тёмный купол с жерлом)
+const shellR = en.w * 0.48 * pulse;
+const sx0 = -shellR*0.2, sy0 = -shellR*0.6;
+drawShell(sx0, sy0, shellR, '#554433', '#2a1f14', en.shellRot || 0);
+ctx.save();
+ctx.translate(sx0, sy0);
+ctx.rotate(-0.5);
+ctx.fillStyle = '#222';
+ctx.strokeStyle = '#ff6600'; ctx.lineWidth = 1.5;
+ctx.beginPath();
+ctx.ellipse(shellR*0.3, -shellR*0.5, 8, 12, 0.3, 0, Math.PI*2);
+ctx.fill(); ctx.stroke();
+ctx.restore();
+// Прицельный телеграф — светящаяся точка растёт перед выстрелом
+if (en.aimTelegraph > 0) {
+ctx.globalAlpha = en.aimTelegraph;
+ctx.fillStyle = '#ff2200';
+ctx.shadowColor = '#ff2200'; ctx.shadowBlur = 12;
+ctx.beginPath();
+ctx.arc(sx0 + Math.cos(-0.2)*shellR*0.3, sy0 - shellR*0.7, 4 + en.aimTelegraph*4, 0, Math.PI*2);
+ctx.fill();
+ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+}
+// Глаза
+ctx.fillStyle = '#fff';
+ctx.beginPath(); ctx.arc(bodyW*0.28, -14, 3, 0, Math.PI*2); ctx.arc(bodyW*0.34, -18, 3, 0, Math.PI*2); ctx.fill();
+ctx.fillStyle = '#ffaa00'; ctx.shadowColor = '#ffaa00'; ctx.shadowBlur = 6;
+ctx.beginPath(); ctx.arc(bodyW*0.28, -14, 1.5, 0, Math.PI*2); ctx.arc(bodyW*0.34, -18, 1.5, 0, Math.PI*2); ctx.fill();
+ctx.shadowBlur = 0;
+ctx.restore();
+}
+
+function drawStretchedSnail(en) {
+ctx.save();
+ctx.translate(en.x, en.y);
+const pulse = Math.sin(en.pulsePhase) * 0.2 + 0.8;
+const baseColor = en.state === 'growing' ? '#ff6699' : en.state === 'retracting' ? '#cc77aa' : '#aa6699';
+const bodyColor = '#bbaacc';
+if (en.state === 'growing') {
+ctx.save();
+ctx.globalAlpha = 0.5 + Math.sin(gameTime * 10) * 0.3;
+ctx.strokeStyle = '#ff3377'; ctx.lineWidth = 2; ctx.shadowColor = '#ff3377'; ctx.shadowBlur = 14;
+ctx.beginPath(); ctx.arc(0, 0, en.w * 0.7, 0, Math.PI * 2); ctx.stroke();
+ctx.shadowBlur = 0; ctx.restore();
+}
+
+if (en.growDirection === 'up') {
+const grd = ctx.createLinearGradient(0, 0, 0, en.currentH);
+grd.addColorStop(0, bodyColor);
+grd.addColorStop(0.5, baseColor);
+grd.addColorStop(1, '#555566');
+ctx.fillStyle = grd;
+ctx.shadowColor = baseColor;
+ctx.shadowBlur = 10 * pulse;
+ctx.beginPath();
+const segments = 8;
+for (let i = 0; i <= segments; i++) {
+const t = i / segments;
+const y = t * en.currentH;
+const wave = Math.sin(t * Math.PI * 2 + gameTime * 2) * 3;
+const w = en.w/2 * (1 - t * 0.3);
+if (i === 0) ctx.moveTo(-w + wave, y);
+else ctx.lineTo(-w + wave, y);
+}
+for (let i = segments; i >= 0; i--) {
+const t = i / segments;
+const y = t * en.currentH;
+const wave = Math.sin(t * Math.PI * 2 + gameTime * 2) * 3;
+const w = en.w/2 * (1 - t * 0.3);
+ctx.lineTo(w + wave, y);
+}
+ctx.closePath();
+ctx.fill();
+ctx.shadowBlur = 0;
+drawShell(0, -en.w * 0.3, en.w * 0.5, '#888899', '#444455', 0);
+} else {
+const totalW = en.w + en.sideExtend * 2;
+const grd = ctx.createLinearGradient(-totalW/2, 0, totalW/2, 0);
+grd.addColorStop(0, '#555566');
+grd.addColorStop(0.5, bodyColor);
+grd.addColorStop(1, '#555566');
+ctx.fillStyle = grd;
+ctx.shadowColor = baseColor;
+ctx.shadowBlur = 10 * pulse;
+ctx.beginPath();
+const segments = 10;
+for (let i = 0; i <= segments; i++) {
+const t = i / segments;
+const x = -totalW/2 + t * totalW;
+const wave = Math.sin(t * Math.PI * 3 + gameTime * 2) * 3;
+if (i === 0) ctx.moveTo(x, -en.baseH/2 + wave);
+else ctx.lineTo(x, -en.baseH/2 + wave);
+}
+for (let i = segments; i >= 0; i--) {
+const t = i / segments;
+const x = -totalW/2 + t * totalW;
+const wave = Math.sin(t * Math.PI * 3 + gameTime * 2) * 3;
+ctx.lineTo(x, en.baseH/2 + wave);
+}
+ctx.closePath();
+ctx.fill();
+ctx.shadowBlur = 0;
+drawShell(0, 0, en.w * 0.55, '#888899', '#444455', 0);
+}
+ctx.restore();
+}
+
+// ... [Функции updateFinalEnding, endJourney и остальная логика остаются без изменений] ...
+
+function draw() {
+const b = level.biome;
+drawBackground(b);
+
+ctx.save();
+ctx.translate(-cameraX, -cameraY);
+
+// Платформы
+for (let p of level.platforms) {
+if (p.x + p.w < cameraX - 100 || p.x > cameraX + canvas.width + 100) continue;
+drawPlatform(p, b);
+}
+
+// Цветы и бабочки (для финала)
+if (level.isFinalEnding && level.colorRestore > 0.6 && level.flowers) {
+for (let f of level.flowers) {
+if (f.x < cameraX - 50 || f.x > cameraX + canvas.width + 50) continue;
+const sway = Math.sin(f.swayPhase + gameTime) * 3;
+ctx.save();
+ctx.translate(f.x + sway, f.y);
+ctx.strokeStyle = '#228b22';
+ctx.lineWidth = 2;
+ctx.beginPath();
+ctx.moveTo(0, 0);
+ctx.lineTo(sway * 0.5, -15);
+ctx.stroke();
+ctx.fillStyle = `hsl(${f.hue}, 80%, 65%)`;
+for (let i = 0; i < 5; i++) {
+const angle = (i / 5) * Math.PI * 2;
+ctx.beginPath();
+ctx.ellipse(Math.cos(angle) * f.size * 0.5, Math.sin(angle) * f.size * 0.5 - 15, f.size * 0.4, f.size * 0.3, angle, 0, Math.PI * 2);
+ctx.fill();
+}
+ctx.fillStyle = '#ffff00';
+ctx.beginPath();
+ctx.arc(0, -15, f.size * 0.25, 0, Math.PI * 2);
+ctx.fill();
+ctx.restore();
+}
+}
+
+// Кристаллы
+for (let c of level.crystals) {
+if (c.collected || c.x < cameraX - 50 || c.x > cameraX + canvas.width + 50) continue;
+drawCrystal(c, b);
+}
+
+// Дропы
+for (let drop of level.enemyDrops) {
+if (drop.collected) continue;
+ctx.save();
+ctx.translate(drop.x, drop.y);
+ctx.rotate(gameTime * 3);
+ctx.fillStyle = '#00ffaa';
+ctx.shadowColor = '#00ffaa';
+ctx.shadowBlur = 15;
+ctx.beginPath();
+ctx.arc(0, 0, drop.size, 0, Math.PI * 2);
+ctx.fill();
+ctx.shadowBlur = 0;
+ctx.restore();
+}
+
+// Ягоды
+for (let berry of level.berries) {
+if (berry.collected || berry.x < cameraX - 50 || berry.x > cameraX + canvas.width + 50) continue;
+drawBerry(berry);
+}
+
+// Батарейки лазера и патроны пулемёта
+for (let pu of level.powerups) {
+if (pu.collected || pu.x < cameraX - 50 || pu.x > cameraX + canvas.width + 50) continue;
+const bob = Math.sin(gameTime * 3 + pu.bobOffset) * 5;
+ctx.save();
+ctx.translate(pu.x, pu.y + bob);
+if (pu.type === 'battery') {
+ctx.shadowColor = '#00ffff'; ctx.shadowBlur = 14;
+ctx.fillStyle = '#0a3a3a'; ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 2;
+ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-9, -14, 18, 26, 3) : ctx.rect(-9, -14, 18, 26);
+ctx.fill(); ctx.stroke();
+ctx.fillStyle = '#00ffff';
+ctx.fillRect(-4, -18, 8, 4);
+const fillH = 18 * (0.5 + Math.sin(gameTime * 4) * 0.3 + 0.3);
+ctx.fillStyle = '#00ffff'; ctx.globalAlpha = 0.8;
+ctx.fillRect(-6, 10 - fillH, 12, fillH);
+ctx.globalAlpha = 1;
+ctx.fillStyle = '#fff'; ctx.font = 'bold 8px monospace'; ctx.textAlign = 'center';
+ctx.fillText('⚡', 0, 4);
+} else {
+ctx.shadowColor = '#ffaa00'; ctx.shadowBlur = 14;
+ctx.fillStyle = '#5a3a10'; ctx.strokeStyle = '#ffaa00'; ctx.lineWidth = 2;
+ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-12, -9, 24, 18, 3) : ctx.rect(-12, -9, 24, 18);
+ctx.fill(); ctx.stroke();
+ctx.fillStyle = '#ffcc66';
+ctx.fillRect(-8, -5, 4, 10); ctx.fillRect(-1, -5, 4, 10); ctx.fillRect(6, -5, 4, 10);
+}
+ctx.shadowBlur = 0;
+ctx.restore();
+}
+
+// Осколки
+for (let s of level.shards) {
+if (s.collected || s.x < cameraX - 100 || s.x > cameraX + canvas.width + 100) continue;
+drawShard(s);
+}
+
+// Враги
+for (let en of level.enemies) {
+if (!en.alive || en.x < cameraX - 200 || en.x > cameraX + canvas.width + 200) continue;
+if (en.type !== 'flyer') {
+ctx.save();
+ctx.fillStyle = 'rgba(0,0,0,0.35)';
+ctx.beginPath();
+ctx.ellipse(en.x, en.y + en.h * 0.5 + 6, en.w * 0.4, en.w * 0.12, 0, 0, Math.PI * 2);
+ctx.fill();
+ctx.restore();
+}
+if (en.type === 'spike') {
+drawSnailEnemy(en, { shellColor: '#777788', shellAccent: '#444455', bodyColor: '#888899', bodyAccent: '#555566', eyeColor: '#ff3300', extraSpikes: 8, cracked: true, shellRotation: en.shellRot || 0 });
+} else if (en.type === 'slime') {
+drawSnailEnemy(en, { shellColor: '#557755', shellAccent: '#2a3a2a', bodyColor: '#77aa55', bodyAccent: '#3a5a2a', eyeColor: '#ccff00', slime: true, shellSize: 0.85, shellRotation: en.shellRot || 0 });
+} else if (en.type === 'phantom') {
+drawSnailEnemy(en, { shellColor: '#8888aa', shellAccent: '#555577', bodyColor: '#aaaacc', bodyAccent: '#666688', eyeColor: '#ff00ff', ghost: true, shellRotation: en.shellRot || 0 });
+} else if (en.type === 'flyer') {
+const isVulnerable = en.state === 'swoop';
+drawCloudPuff(en.x, en.y + en.h * 0.55, isVulnerable ? 0.85 : 1, en.wingPhase || 0);
+drawSnailEnemy(en, { shellColor: isVulnerable ? '#aa5544' : '#66aadd', shellAccent: isVulnerable ? '#663322' : '#336699', bodyColor: isVulnerable ? '#aa7766' : '#99ccee', bodyAccent: isVulnerable ? '#774433' : '#5588bb', eyeColor: isVulnerable ? '#ffff00' : '#ff0000', aura: isVulnerable ? null : '#88ddff', vulnerable: isVulnerable, shellRotation: en.shellRot || 0 });
+if (isVulnerable) {
+ctx.fillStyle = '#ff0000';
+ctx.globalAlpha = 0.7 + Math.sin(gameTime * 10) * 0.3;
+ctx.font = 'bold 20px monospace';
+ctx.textAlign = 'center';
+ctx.fillText('!', en.x, en.y - en.h/2 - 15);
+ctx.globalAlpha = 1;
+}
+} else if (en.type === 'stretcher') {
+drawStretchedSnail(en);
+} else if (en.type === 'immortal') {
+drawSnailEnemy(en, { shellColor: '#555566', shellAccent: '#222233', bodyColor: '#666677', bodyAccent: '#333344', eyeColor: '#ff0000', multipleEyes: 3, aura: '#aa00ff', shellSize: 1.1, shellRotation: en.shellRot || 0 });
+} else if (en.type === 'bomber') {
+drawBomberSnail(en);
+}
+}
+
+// Мортирные снаряды врагов
+for (let ep of enemyProjectiles) {
+ctx.save();
+ctx.translate(ep.x, ep.y);
+ctx.rotate(ep.rot || 0);
+ctx.fillStyle = '#3a2a1a';
+ctx.strokeStyle = '#ff6600'; ctx.lineWidth = 1.5;
+ctx.shadowColor = '#ff6600'; ctx.shadowBlur = 10;
+ctx.beginPath();
+ctx.ellipse(0, 0, 9, 7, 0, 0, Math.PI * 2);
+ctx.fill(); ctx.stroke();
+ctx.shadowBlur = 0;
+ctx.restore();
+}
+
+// Босс
+if (level.boss && level.boss.alive) {
+const b = level.boss;
+ctx.save();
+ctx.translate(b.x, b.y);
+if (b.invincible > 0 && Math.floor(b.invincible / 3) % 2 === 0) ctx.globalAlpha = 0.5;
+if (b.dashing) {
+ctx.save();
+ctx.globalAlpha = 0.5 + Math.sin(gameTime * 20) * 0.3;
+ctx.strokeStyle = '#ffffff';
+ctx.lineWidth = 4;
+ctx.shadowColor = '#ffffff'; ctx.shadowBlur = 25;
+ctx.beginPath();
+ctx.arc(0, 0, b.w * 0.9, 0, Math.PI * 2);
+ctx.stroke();
+ctx.restore();
+}
+
+// Тело босса
+const bodyGrd = ctx.createRadialGradient(0, 20, 0, 0, 20, b.w);
+bodyGrd.addColorStop(0, b.phase >= 4 ? '#ff2222' : b.enrage ? '#aa4444' : '#888899');
+bodyGrd.addColorStop(1, b.phase >= 4 ? '#330000' : b.enrage ? '#441111' : '#333344');
+ctx.fillStyle = bodyGrd;
+ctx.beginPath();
+ctx.ellipse(0, 20, b.w * 0.7, b.h * 0.4, 0, 0, Math.PI * 2);
+ctx.fill();
+
+// Панцирь босса
+const shellR = b.w * 0.55;
+const shellColor = b.isFinalBoss ? '#ff0066' : (b.phase >= 4 ? '#ff0000' : b.enrage ? '#aa2222' : level.biome.accent);
+const shellAccent = b.isFinalBoss ? '#660033' : (b.phase >= 4 ? '#440000' : b.enrage ? '#552222' : '#555566');
+drawShell(0, -10, shellR, shellColor, shellAccent, gameTime * 0.5, true);
+
+// Аура истинной ярости (фаза 4) — пылающий венец
+if (b.phase >= 4) {
+ctx.save();
+ctx.globalAlpha = 0.5 + Math.sin(gameTime * 8) * 0.3;
+ctx.strokeStyle = '#ff0000';
+ctx.lineWidth = 3;
+ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 30;
+ctx.beginPath();
+ctx.arc(0, -10, shellR + 25 + Math.sin(gameTime*6)*5, 0, Math.PI * 2);
+ctx.stroke();
+ctx.shadowBlur = 0;
+ctx.restore();
+for (let i = 0; i < 6; i++) {
+const a = (i / 6) * Math.PI * 2 + gameTime;
+const cx = Math.cos(a) * (shellR + 15), cy = -10 + Math.sin(a) * (shellR + 15) - 20;
+ctx.fillStyle = '#ffaa00';
+ctx.shadowColor = '#ff6600'; ctx.shadowBlur = 10;
+ctx.beginPath();
+ctx.moveTo(cx, cy - 10); ctx.lineTo(cx - 5, cy + 5); ctx.lineTo(cx + 5, cy + 5);
+ctx.closePath(); ctx.fill();
+ctx.shadowBlur = 0;
+}
+}
+
+// Шипы босса
+const spikeCount = b.phase === 1 ? 10 : b.phase === 2 ? 14 : b.phase === 3 ? 18 : 24;
+ctx.fillStyle = b.isFinalBoss ? '#ff44aa' : (b.phase >= 4 ? '#ffff00' : b.enrage ? '#ff4444' : '#ccccdd');
+for (let i = 0; i < spikeCount; i++) {
+const angle = (i / spikeCount) * Math.PI * 2 + gameTime * 0.5;
+const sx = Math.cos(angle) * shellR;
+const sy = -10 + Math.sin(angle) * shellR;
+const spikeLen = 15 + (b.phase - 1) * 5;
+const ex = Math.cos(angle) * (shellR + spikeLen);
+const ey = -10 + Math.sin(angle) * (shellR + spikeLen);
+ctx.beginPath();
+ctx.moveTo(sx - Math.cos(angle + Math.PI/2) * 5, sy - Math.sin(angle + Math.PI/2) * 5);
+ctx.lineTo(ex, ey);
+ctx.lineTo(sx + Math.cos(angle + Math.PI/2) * 5, sy + Math.sin(angle + Math.PI/2) * 5);
+ctx.closePath();
+ctx.fill();
+}
+
+// Глаза босса
+ctx.fillStyle = '#fff';
+ctx.beginPath();
+ctx.arc(25, -shellR - 50, 8, 0, Math.PI * 2);
+ctx.arc(-25, -shellR - 50, 8, 0, Math.PI * 2);
+ctx.fill();
+ctx.shadowColor = '#ff0000';
+ctx.shadowBlur = 10;
+ctx.fillStyle = '#ff0000';
+ctx.beginPath();
+ctx.arc(25, -shellR - 50, 4 + (b.phase - 1), 0, Math.PI * 2);
+ctx.arc(-25, -shellR - 50, 4 + (b.phase - 1), 0, Math.PI * 2);
+ctx.fill();
+ctx.shadowBlur = 0;
+
+ctx.restore();
+
+// Снаряды босса
+for (let p of b.projectiles) {
+ctx.save();
+ctx.translate(p.x, p.y);
+if (p.type === 'spike') {
+const ang = Math.atan2(p.vy, p.vx || 0.001);
+ctx.rotate(ang + Math.PI/2);
+ctx.fillStyle = '#ff2222';
+ctx.strokeStyle = '#661111'; ctx.lineWidth = 1.5;
+ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 14;
+ctx.beginPath();
+ctx.moveTo(0, -18); ctx.lineTo(7, 8); ctx.lineTo(-7, 8);
+ctx.closePath(); ctx.fill(); ctx.stroke();
+} else if (p.type === 'spiral') {
+ctx.fillStyle = '#ff00ff';
+ctx.shadowColor = '#ff00ff'; ctx.shadowBlur = 16;
+ctx.beginPath(); ctx.arc(0, 0, 7, 0, Math.PI * 2); ctx.fill();
+ctx.fillStyle = '#ffffff';
+ctx.beginPath(); ctx.arc(0, 0, 3, 0, Math.PI * 2); ctx.fill();
+} else if (p.type === 'sweep') {
+const ang = Math.atan2(p.vy, p.vx);
+ctx.rotate(ang);
+ctx.fillStyle = '#ffaa00';
+ctx.shadowColor = '#ffaa00'; ctx.shadowBlur = 12;
+ctx.beginPath();
+ctx.ellipse(0, 0, 14, 4, 0, 0, Math.PI * 2);
+ctx.fill();
+} else if (p.type === 'ice') {
+const ang = Math.atan2(p.vy, p.vx || 0.001);
+ctx.rotate(ang + Math.PI/2);
+const iceGrd = ctx.createLinearGradient(0, -13, 0, 8);
+iceGrd.addColorStop(0, '#ffffff');
+iceGrd.addColorStop(0.5, '#aaeeff');
+iceGrd.addColorStop(1, '#3388cc');
+ctx.fillStyle = iceGrd;
+ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1;
+ctx.shadowColor = '#66ccff'; ctx.shadowBlur = 14;
+ctx.beginPath();
+ctx.moveTo(0, -13); ctx.lineTo(5, 3); ctx.lineTo(0, 8); ctx.lineTo(-5, 3);
+ctx.closePath(); ctx.fill(); ctx.stroke();
+ctx.shadowBlur = 0;
+} else if (p.type === 'slime') {
+const wobble = Math.sin(gameTime * 8 + p.x * 0.1) * 1.5;
+ctx.fillStyle = '#77cc22';
+ctx.shadowColor = '#aaff44'; ctx.shadowBlur = 12;
+ctx.beginPath();
+ctx.ellipse(0, 0, 8 + wobble, 8 - wobble, 0, 0, Math.PI * 2);
+ctx.fill();
+ctx.fillStyle = 'rgba(255,255,255,0.5)';
+ctx.beginPath();
+ctx.arc(-2, -2, 2.5, 0, Math.PI * 2);
+ctx.fill();
+ctx.shadowBlur = 0;
+} else {
+ctx.fillStyle = '#ff4400';
+ctx.shadowColor = '#ff4400';
+ctx.shadowBlur = 15;
+ctx.beginPath();
+ctx.arc(0, 0, 10, 0, Math.PI * 2);
+ctx.fill();
+ctx.fillStyle = '#ffff00';
+ctx.beginPath();
+ctx.arc(0, 0, 5, 0, Math.PI * 2);
+ctx.fill();
+}
+ctx.shadowBlur = 0;
+ctx.restore();
+}
+}
+
+// Пули
+for (let bullet of bullets) {
+ctx.save();
+ctx.translate(bullet.x, bullet.y);
+if (bullet.type === 'laser') {
+ctx.fillStyle = '#ff00ff';
+ctx.shadowColor = '#ff00ff';
+ctx.shadowBlur = 15;
+ctx.fillRect(-15, -bullet.size/2, 30, bullet.size);
+} else {
+ctx.fillStyle = '#ffff00';
+ctx.shadowColor = '#ffff00';
+ctx.shadowBlur = 10;
+ctx.beginPath();
+ctx.arc(0, 0, 4, 0, Math.PI * 2);
+ctx.fill();
+}
+ctx.shadowBlur = 0;
+ctx.restore();
+}
+
+// Игрок (Твист)
+ctx.save();
+ctx.translate(player.x, player.y + player.height/2);
+if (player.invincible > 0 && Math.floor(player.invincible / 4) % 2 === 0) ctx.globalAlpha = 0.5;
+
+if (player.shieldActive) {
+ctx.strokeStyle = '#00ffff';
+ctx.lineWidth = 2;
+ctx.shadowColor = '#00ffff';
+ctx.shadowBlur = 15;
+ctx.beginPath();
+ctx.arc(0, 0, 25, 0, Math.PI * 2);
+ctx.stroke();
+ctx.shadowBlur = 0;
+}
+
+if (player.frozenTimer > 0) {
+ctx.save();
+ctx.globalAlpha = 0.5 + Math.sin(gameTime * 6) * 0.15;
+ctx.strokeStyle = '#aaeeff';
+ctx.lineWidth = 2;
+ctx.shadowColor = '#66ccff'; ctx.shadowBlur = 12;
+for (let i = 0; i < 4; i++) {
+const a = (i / 4) * Math.PI * 2 + gameTime;
+ctx.beginPath();
+ctx.moveTo(Math.cos(a) * 14, Math.sin(a) * 14);
+ctx.lineTo(Math.cos(a) * 24, Math.sin(a) * 24);
+ctx.stroke();
+}
+ctx.shadowBlur = 0;
+ctx.restore();
+}
+if (player.slimedTimer > 0) {
+ctx.save();
+ctx.globalAlpha = 0.6;
+ctx.fillStyle = '#aaff44';
+for (let i = 0; i < 3; i++) {
+const dripY = ((gameTime * 40 + i * 15) % 30);
+ctx.beginPath();
+ctx.ellipse(-10 + i * 10, 15 + dripY, 2.5, 4, 0, 0, Math.PI * 2);
+ctx.fill();
+}
+ctx.restore();
+}
+
+if (player.rolling) {
+ctx.save();
+ctx.rotate(player.shellRotation);
+let shellColor = player.berry === 'fire' ? '#ff4400' : player.berry === 'speed' ? '#ffff00' : b.accent;
+let shellAccent = player.berry === 'fire' ? '#aa2200' : player.berry === 'speed' ? '#aa8800' : level.biome.accent2;
+drawShell(0, 0, player.width/2 + 2, shellColor, shellAccent, 0, true);
+ctx.restore();
+} else {
+// Тело
+ctx.fillStyle = '#8866cc';
+ctx.beginPath();
+ctx.ellipse(0, 5, 12, 8, 0, 0, Math.PI * 2);
+ctx.fill();
+
+// Панцирь
+let shellColor = player.berry === 'fire' ? '#ff4400' : player.berry === 'speed' ? '#ffff00' : b.accent;
+let shellAccent = player.berry === 'fire' ? '#aa2200' : player.berry === 'speed' ? '#aa8800' : level.biome.accent2;
+drawShell(-2, -5, 12, shellColor, shellAccent, 0, true);
+
+// Антенны
+ctx.strokeStyle = '#8866cc';
+ctx.lineWidth = 2;
+ctx.beginPath();
+ctx.moveTo(5 * player.facing, 0);
+ctx.lineTo(10 * player.facing, -12);
+ctx.stroke();
+ctx.beginPath();
+ctx.moveTo(8 * player.facing, 2);
+ctx.lineTo(14 * player.facing, -8);
+ctx.stroke();
+
+// Глаза (смотрят в сторону движения)
+ctx.fillStyle = '#ffffff';
+ctx.beginPath();
+ctx.arc(10 * player.facing, -12, 3, 0, Math.PI * 2);
+ctx.arc(14 * player.facing, -8, 3, 0, Math.PI * 2);
+ctx.fill();
+
+ctx.fillStyle = '#000';
+const eyeOffset = player.facing * 1;
+ctx.beginPath();
+ctx.arc(10 * player.facing + eyeOffset, -12, 1.5, 0, Math.PI * 2);
+ctx.arc(14 * player.facing + eyeOffset, -8, 1.5, 0, Math.PI * 2);
+ctx.fill();
+}
+
+if (player.carryingSphere) {
+ctx.save();
+ctx.translate(0, -40);
+drawSphere(0, 0, 0.5);
+ctx.restore();
+}
+ctx.restore();
+
+// Сфера и финал
+if (currentLevel === 1001 && level.isFinalEnding) {
+const pedX = level.pedestalX, pedY = level.pedestalY;
+ctx.fillStyle = '#444';
+ctx.fillRect(pedX - 25, pedY - 80, 50, 80);
+ctx.fillStyle = '#666';
+ctx.fillRect(pedX - 30, pedY - 85, 60, 10);
+
+if (level.spherePlaced && level.endingPhase === 0) drawSphere(pedX, level.sphereY);
+
+// Осколки сферы
+if (level.sphereFragments) {
+for (let f of level.sphereFragments) {
+ctx.save();
+ctx.translate(f.x, f.y);
+ctx.rotate(f.rotation);
+const alpha = Math.min(1, f.life / 60);
+ctx.globalAlpha = alpha;
+ctx.fillStyle = f.color;
+ctx.shadowColor = f.color;
+ctx.shadowBlur = 10;
+ctx.beginPath();
+for (let i = 0; i < 5; i++) {
+const angle = (i / 5) * Math.PI * 2;
+const r = f.size * (0.7 + Math.sin(i * 3.7) * 0.3);
+const x = Math.cos(angle) * r, y = Math.sin(angle) * r;
+if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+}
+ctx.closePath();
+ctx.fill();
+ctx.shadowBlur = 0;
+ctx.restore();
+}
+}
+
+// Дружелюбные улитки
+for (let s of level.friendlySnails) {
+ctx.save();
+ctx.translate(s.x, s.y);
+ctx.fillStyle = `hsl(${s.hue}, 60%, 70%)`;
+ctx.beginPath();
+ctx.ellipse(0, 5, 14, 9, 0, 0, Math.PI * 2);
+ctx.fill();
+drawShell(-3, -5, 12, `hsl(${s.hue}, 80%, 75%)`, `hsl(${s.hue}, 60%, 45%)`, s.shellRot, true);
+
+ctx.strokeStyle = `hsl(${s.hue}, 60%, 70%)`;
+ctx.lineWidth = 2;
+ctx.beginPath();
+ctx.moveTo(5, 0); ctx.lineTo(9, -10);
+ctx.stroke();
+ctx.beginPath();
+ctx.moveTo(7, 2); ctx.lineTo(12, -7);
+ctx.stroke();
+
+const blinking = s.eyeBlink > 170;
+ctx.fillStyle = '#ffffff';
+if (!blinking) {
+ctx.beginPath();
+ctx.arc(9, -10, 2.5, 0, Math.PI * 2);
+ctx.arc(12, -7, 2.5, 0, Math.PI * 2);
+ctx.fill();
+ctx.fillStyle = '#000';
+ctx.beginPath();
+ctx.arc(9, -10, 1.2, 0, Math.PI * 2);
+ctx.arc(12, -7, 1.2, 0, Math.PI * 2);
+ctx.fill();
+}
+if (s.arrived) {
+ctx.strokeStyle = '#000';
+ctx.lineWidth = 1.5;
+ctx.beginPath();
+const smileSize = 3 + Math.sin(s.smilePhase) * 0.5;
+ctx.arc(6, 4, smileSize, 0, Math.PI);
+ctx.stroke();
+}
+ctx.restore();
+}
+
+// Шарики
+for (let b of level.balloons) {
+ctx.save();
+ctx.translate(b.x, b.y);
+ctx.rotate(b.rotation);
+ctx.fillStyle = b.color;
+ctx.shadowColor = b.color;
+ctx.shadowBlur = 10;
+ctx.beginPath();
+ctx.ellipse(0, 0, b.size * 0.7, b.size, 0, 0, Math.PI * 2);
+ctx.fill();
+ctx.shadowBlur = 0;
+ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+ctx.beginPath();
+ctx.ellipse(-b.size * 0.2, -b.size * 0.3, b.size * 0.2, b.size * 0.3, 0, 0, Math.PI * 2);
+ctx.fill();
+ctx.restore();
+}
+}
+
+// Следы
+for (let t of player.trail) {
+let alpha = t.life / 20;
+ctx.fillStyle = t.rolling ? `rgba(${hexToRgb(b.accent)}, ${alpha * 0.5})` : `rgba(255, 0, 255, ${alpha * 0.3})`;
+ctx.beginPath();
+ctx.arc(t.x, t.y + player.height/2, player.width/2 * alpha, 0, Math.PI * 2);
+ctx.fill();
+}
+
+// Язык
+if (player.tongue.active) {
+ctx.strokeStyle = '#00ff88';
+ctx.lineWidth = 3;
+ctx.shadowColor = '#00ff88';
+ctx.shadowBlur = 5;
+ctx.beginPath();
+ctx.moveTo(player.x, player.y);
+if (player.tongue.hooked) ctx.lineTo(player.tongue.targetX, player.tongue.targetY);
+else {
+let angle = Math.atan2(player.tongue.targetY - player.y, player.tongue.targetX - player.x);
+ctx.lineTo(player.x + Math.cos(angle) * player.tongue.length, player.y + Math.sin(angle) * player.tongue.length);
+}
+ctx.stroke();
+ctx.shadowBlur = 0;
+}
+
+// Частицы (Аддитивное смешивание для неонового свечения!)
+ctx.save();
+ctx.globalCompositeOperation = 'lighter';
+for (let p of particles) {
+let alpha = p.life / 40;
+ctx.fillStyle = p.color;
+ctx.globalAlpha = alpha;
+ctx.beginPath();
+ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+ctx.fill();
+}
+ctx.restore();
+ctx.globalAlpha = 1;
+
+ctx.restore();
+
+// HUD
+ctx.fillStyle = '#ff0066';
+ctx.font = '20px monospace';
+for (let i = 0; i < player.maxHp; i++) {
+if (i < player.hp) ctx.fillText('❤️', 20 + i * 30, 80);
+else { ctx.globalAlpha = 0.3; ctx.fillText('🖤', 20 + i * 30, 80); ctx.globalAlpha = 1; }
+}
+
+if (player.turboCharge > 0) {
+ctx.fillStyle = '#333';
+ctx.fillRect(20, 100, 100, 10);
+ctx.fillStyle = player.turboCharge >= 100 ? '#ff00ff' : '#ff00ff88';
+ctx.fillRect(20, 100, player.turboCharge, 10);
+ctx.strokeStyle = '#ff00ff';
+ctx.strokeRect(20, 100, 100, 10);
+}
+
+if (level.boss && level.boss.alive) {
+const b = level.boss;
+document.getElementById('dangerVignette').style.display = (b.phase >= 4) ? 'block' : 'none';
+const barW = 400, barX = canvas.width/2 - barW/2;
+ctx.save();
+ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 6;
+ctx.fillStyle = '#111';
+ctx.fillRect(barX - 3, 107, barW + 6, 26);
+ctx.restore();
+ctx.fillStyle = '#222';
+ctx.fillRect(barX, 110, barW, 20);
+const phaseColors = ['#ff0066', '#ff6600', '#ff0000', '#ffff00'];
+const phaseColor = phaseColors[b.phase - 1] || '#ff0000';
+const hpGrd = ctx.createLinearGradient(barX, 0, barX + barW, 0);
+hpGrd.addColorStop(0, phaseColor); hpGrd.addColorStop(1, b.phase >= 4 ? '#ffffff' : phaseColor);
+ctx.fillStyle = hpGrd;
+ctx.shadowColor = phaseColor; ctx.shadowBlur = b.phase >= 3 ? 14 : 0;
+ctx.fillRect(barX, 110, barW * Math.max(0, b.hp / b.maxHp), 20);
+ctx.shadowBlur = 0;
+// Сегментные засечки каждые 10%
+ctx.strokeStyle = 'rgba(0,0,0,0.35)'; ctx.lineWidth = 1;
+for (let i = 1; i < 10; i++) { ctx.beginPath(); ctx.moveTo(barX + barW*i/10, 110); ctx.lineTo(barX + barW*i/10, 130); ctx.stroke(); }
+ctx.strokeStyle = phaseColor;
+ctx.lineWidth = 2;
+ctx.strokeRect(barX, 110, barW, 20);
+ctx.fillStyle = '#fff';
+ctx.font = 'bold 10px monospace';
+ctx.textAlign = 'center';
+ctx.fillText(`${Math.max(0, Math.ceil(b.hp))} / ${b.maxHp}`, canvas.width/2, 125);
+ctx.font = 'bold 14px monospace';
+const phaseLabels = ['ФАЗА 1', 'ФАЗА 2', 'ЯРОСТЬ!', '☠ ИСТИННАЯ ЯРОСТЬ ☠'];
+const phaseLabel = phaseLabels[b.phase - 1] || 'ЯРОСТЬ!';
+ctx.fillStyle = b.phase >= 4 ? '#ff2222' : '#fff';
+if (b.phase >= 4) { ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 10 + Math.sin(gameTime*10)*5; }
+ctx.fillText(`💀 ${b.name} — ${phaseLabel} 💀`, canvas.width/2, 105);
+ctx.shadowBlur = 0;
+if (b.dashing) {
+ctx.fillStyle = 'rgba(255,255,255,0.85)';
+ctx.font = 'bold 16px monospace';
+ctx.fillText('⚠ РЫВОК! ⚠', canvas.width/2, 145);
+}
+if (b.spiralActive) {
+ctx.fillStyle = 'rgba(255,0,255,0.85)';
+ctx.font = 'bold 16px monospace';
+ctx.fillText('☠ СПИРАЛЬ ХАОСА ☠', canvas.width/2, 145);
+}
+} else {
+document.getElementById('dangerVignette').style.display = 'none';
+}
+
+if (comboCount >= 2 && comboTimer > 0) {
+const comboAlpha = Math.min(1, comboTimer / 30);
+ctx.save();
+ctx.globalAlpha = comboAlpha;
+ctx.fillStyle = comboCount >= 8 ? '#ff00ff' : comboCount >= 5 ? '#ffaa00' : '#ffff00';
+ctx.font = 'bold 22px monospace';
+ctx.textAlign = 'right';
+ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 12;
+ctx.fillText(`🔥 КОМБО ×${comboCount}`, canvas.width - 20, 60);
+ctx.shadowBlur = 0;
+ctx.restore();
+}
+
+if (level.shardCollectionPhase && !levelComplete) {
+const timeSinceDeath = gameTime - level.bossDefeatedAt;
+const timeLeft = Math.max(0, SHARD_COLLECTION_TIME - timeSinceDeath);
+ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+ctx.fillRect(canvas.width/2 - 180, 140, 360, 80);
+ctx.strokeStyle = '#ffaa00';
+ctx.lineWidth = 2;
+ctx.strokeRect(canvas.width/2 - 180, 140, 360, 80);
+ctx.fillStyle = '#ffaa00';
+ctx.font = 'bold 16px monospace';
+ctx.textAlign = 'center';
+ctx.fillText('🔶 СБОР ОСКОЛКОВ 🔶', canvas.width/2, 165);
+const timerColor = timeLeft < 5 ? '#ff4444' : timeLeft < 10 ? '#ffaa00' : '#aaffaa';
+ctx.fillStyle = timerColor;
+ctx.font = 'bold 24px monospace';
+ctx.fillText(`${timeLeft.toFixed(1)}s`, canvas.width/2 - 80, 200);
+ctx.fillStyle = '#ffcc00';
+ctx.font = 'bold 18px monospace';
+ctx.fillText(`${levelShardsCollected} / ${level.totalShardsSpawned}`, canvas.width/2 + 80, 200);
+}
+
+let speedBar = Math.min(1, player.speed / 15);
+ctx.fillStyle = '#222';
+ctx.fillRect(canvas.width - 120, 80, 100, 8);
+let speedColor = speedBar > 0.7 ? '#ff0000' : speedBar > 0.4 ? '#ffff00' : '#00ff00';
+ctx.fillStyle = speedColor;
+ctx.fillRect(canvas.width - 120, 80, speedBar * 100, 8);
+
+const progressRatio = Math.min(1, player.x / level.length);
+ctx.fillStyle = '#222';
+ctx.fillRect(canvas.width/2 - 150, 20, 300, 6);
+ctx.fillStyle = b.accent;
+ctx.fillRect(canvas.width/2 - 150, 20, 300 * progressRatio, 6);
+ctx.strokeStyle = b.accent;
+ctx.strokeRect(canvas.width/2 - 150, 20, 300, 6);
+ctx.fillStyle = '#fff';
+ctx.font = '10px monospace';
+ctx.textAlign = 'center';
+ctx.fillText(`${Math.floor(progressRatio * 100)}%`, canvas.width/2, 40);
+}
+
+function drawSphere(x, y, scale = 1) {
+ctx.save();
+ctx.translate(x, y);
+ctx.scale(scale, scale);
+const pulse = Math.sin(gameTime * 4) * 0.2 + 1;
+const r = 25 * pulse;
+
+const outerGlow = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 2);
+outerGlow.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+outerGlow.addColorStop(0.5, 'rgba(255, 200, 255, 0.3)');
+outerGlow.addColorStop(1, 'rgba(255, 200, 255, 0)');
+ctx.fillStyle = outerGlow;
+ctx.beginPath();
+ctx.arc(0, 0, r * 2, 0, Math.PI * 2);
+ctx.fill();
+
+const sphereGrd = ctx.createRadialGradient(-r*0.3, -r*0.3, 0, 0, 0, r);
+sphereGrd.addColorStop(0, '#ffffff');
+sphereGrd.addColorStop(0.3, '#ffffcc');
+sphereGrd.addColorStop(0.7, '#ffccff');
+sphereGrd.addColorStop(1, '#cc88ff');
+ctx.fillStyle = sphereGrd;
+ctx.shadowColor = '#ffffff';
+ctx.shadowBlur = 30;
+ctx.beginPath();
+ctx.arc(0, 0, r, 0, Math.PI * 2);
+ctx.fill();
+ctx.shadowBlur = 0;
+
+ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+ctx.beginPath();
+ctx.arc(-r*0.3, -r*0.3, r * 0.25, 0, Math.PI * 2);
+ctx.fill();
+ctx.restore();
+}
+
+function lerpColor(c1, c2, t) {
+const col1 = parseColor(c1), col2 = parseColor(c2);
+const r = Math.round(col1.r + (col2.r - col1.r) * t);
+const g = Math.round(col1.g + (col2.g - col1.g) * t);
+const bl = Math.round(col1.b + (col2.b - col1.b) * t);
+return `rgba(${r}, ${g}, ${bl}, 1)`;
+}
+function parseColor(c) {
+if (c.startsWith('#')) {
+return { r: parseInt(c.slice(1,3), 16), g: parseInt(c.slice(3,5), 16), b: parseInt(c.slice(5,7), 16), a: 1 };
+} else if (c.startsWith('rgba')) {
+const match = c.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+if (match) return { r: +match[1], g: +match[2], b: +match[3], a: match[4] ? +match[4] : 1 };
+} else if (c.startsWith('rgb')) {
+const match = c.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+if (match) return { r: +match[1], g: +match[2], b: +match[3], a: 1 };
+}
+return { r: 128, g: 128, b: 128, a: 1 };
+}
+function hexToRgb(hex) {
+if (hex.startsWith('#')) {
+const r = parseInt(hex.slice(1,3), 16), g = parseInt(hex.slice(3,5), 16), bl = parseInt(hex.slice(5,7), 16);
+return `${r}, ${g}, ${bl}`;
+}
+return '255, 255, 255';
+}
+
+function gameLoop() {
+if (!gameStarted) return;
+updateAutoPerfScale(performance.now());
+update();
+draw();
+requestAnimationFrame(gameLoop);
+}
+showMenu('mainMenu');
+</script>
+</body>
+</html>
